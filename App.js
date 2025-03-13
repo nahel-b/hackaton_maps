@@ -3,19 +3,20 @@ import React, { useState } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { convertionLieu, itineraire } from './assets/api';
-import { getApiTransportMode, parseRouteGeometry, extractTransitPoints } from './utils/routeUtils';
+import { getApiTransportMode, parseRouteGeometry, extractTransitPoints, selectAppropriateItinerary } from './utils/routeUtils';
 import RouteMap from './components/RouteMap';
 import RouteModal from './components/RouteModal';
-import RouteInfoModal from './components/RouteInfoModal'; // Importez le nouveau composant
+import RouteInfoModal from './components/RouteInfoModal';
 import { getStopCodeByName } from './utils/stopUtils';
 
 export default function App() {
   const [modalVisible, setModalVisible] = useState(true);
-  const [infoModalVisible, setInfoModalVisible] = useState(false); // État pour le nouveau modal d'info
+  const [infoModalVisible, setInfoModalVisible] = useState(false);
+  const [isInfoModalMinimized, setIsInfoModalMinimized] = useState(false);
   const [startLocation, setStartLocation] = useState('');
   const [endLocation, setEndLocation] = useState('');
   const [transportMode, setTransportMode] = useState('walking');
-  const [wheelchairMode, setWheelchairMode] = useState(false); // Nouvel état pour l'accessibilité
+  const [wheelchairMode, setWheelchairMode] = useState(false);
   const [region, setRegion] = useState({
     latitude: 45.1885, // Grenoble center
     longitude: 5.7245,
@@ -23,12 +24,82 @@ export default function App() {
     longitudeDelta: 0.0421,
   });
   const [routeCoordinates, setRouteCoordinates] = useState([]);
-  const [routeData, setRouteData] = useState(null); // Stocke les données complètes d'itinéraire
+  const [routeData, setRouteData] = useState(null);
   const [loading, setLoading] = useState(false);
   const [startCoords, setStartCoords] = useState(null);
   const [endCoords, setEndCoords] = useState(null);
   const [transitPoints, setTransitPoints] = useState([]);
   const [stopTimesData, setStopTimesData] = useState({});
+
+  // Format duration helper function
+  const formatDuration = (seconds) => {
+    const minutes = Math.floor(seconds / 60);
+    const hours = Math.floor(minutes / 60);
+    const remainingMinutes = minutes % 60;
+    
+    if (hours > 0) {
+        return `${hours}h ${remainingMinutes}min`;
+    } else {
+        return `${minutes} min`;
+    }
+  };
+  
+  // Format distance helper function
+  const formatDistance = (meters) => {
+    if (meters < 1000) {
+      return `${Math.round(meters)} m`;
+    } else {
+      return `${(meters / 1000).toFixed(1)} km`;
+    }
+  };
+
+  // Function to get icon for transport mode
+  const getTransportIcon = (mode) => {
+    switch(mode) {
+      case 'walking': return 'walk';
+      case 'bicycle': return 'bicycle';
+      case 'car': return 'car';
+      case 'bus': return 'bus';
+      default: return 'navigate';
+    }
+  };
+
+  // Reset the route and return to initial state
+  const resetRoute = () => {
+    setInfoModalVisible(false);
+    setIsInfoModalMinimized(false);
+    setModalVisible(true);
+    setRouteCoordinates([]);
+    setRouteData(null);
+    setStartCoords(null);
+    setEndCoords(null);
+    setTransitPoints([]);
+    setStopTimesData({});
+  };
+
+  // Minimize the route info modal
+  const minimizeInfoModal = () => {
+    setIsInfoModalMinimized(true);
+    setInfoModalVisible(false);
+  };
+
+  // Maximize the route info modal
+  const maximizeInfoModal = () => {
+    setIsInfoModalMinimized(false);
+    setInfoModalVisible(true);
+  };
+
+  // Get the selected itinerary for summary
+  const getSelectedItinerary = () => {
+    if (!routeData || !routeData.plan || !routeData.plan.itineraries || routeData.plan.itineraries.length === 0) {
+      return null;
+    }
+    
+    const apiMode = getApiTransportMode(transportMode, wheelchairMode);
+    
+    // This function is imported from utils/routeUtils.js
+    return selectAppropriateItinerary(routeData.plan.itineraries, apiMode);
+  };
 
   // Search for route
   const searchRoute = async () => {
@@ -152,7 +223,7 @@ export default function App() {
         startCoords={startCoords}
         endCoords={endCoords}
         transitPoints={transitPoints}
-        stopTimesData={stopTimesData} // Pass the prefetched data
+        stopTimesData={stopTimesData}
         onRegionChangeComplete={setRegion}
       />
       
@@ -162,26 +233,61 @@ export default function App() {
         startLocation={startLocation}
         endLocation={endLocation}
         transportMode={transportMode}
-        wheelchairMode={wheelchairMode} // Nouvelle prop
+        wheelchairMode={wheelchairMode}
         loading={loading}
         onClose={() => setModalVisible(false)}
         onSearch={searchRoute}
         onStartLocationChange={setStartLocation}
         onEndLocationChange={setEndLocation}
         onTransportModeChange={setTransportMode}
-        onWheelchairModeChange={setWheelchairMode} // Nouveau handler
+        onWheelchairModeChange={setWheelchairMode}
       />
 
       {/* Modal d'informations d'itinéraire */}
-      <RouteInfoModal
-        visible={infoModalVisible}
-        routeData={routeData}
-        transportMode={transportMode}
-        onClose={() => setInfoModalVisible(false)}
-      />
-
-      {/* Bouton pour réouvrir le modal s'il est fermé */}
-      {!modalVisible && (
+      {routeData && (
+        <RouteInfoModal
+          visible={infoModalVisible}
+          routeData={routeData}
+          transportMode={transportMode}
+          stopTimesData={stopTimesData}
+          onClose={() => {}} // No-op since we don't actually close it
+          onReset={resetRoute}
+          onMinimize={minimizeInfoModal}
+        />
+      )}
+      
+      {/* Floating summary button when route info is minimized */}
+      {isInfoModalMinimized && routeData && (
+        <TouchableOpacity
+          style={styles.routeSummaryButton}
+          onPress={maximizeInfoModal}
+        >
+          <View style={styles.summaryIconContainer}>
+            <Ionicons name={getTransportIcon(transportMode)} size={24} color="#4285F4" />
+          </View>
+          <View style={styles.summaryTextContainer}>
+            {(() => {
+              const itinerary = getSelectedItinerary();
+              return itinerary ? (
+                <>
+                  <Text style={styles.summaryDuration}>
+                    {formatDuration(itinerary.duration)}
+                  </Text>
+                  <Text style={styles.summaryDistance}>
+                    {formatDistance(itinerary.walkDistance)}
+                  </Text>
+                </>
+              ) : (
+                <Text style={styles.summaryText}>Voir détails</Text>
+              );
+            })()}
+          </View>
+          <Ionicons name="chevron-up" size={24} color="#4285F4" />
+        </TouchableOpacity>
+      )}
+      
+      {/* Floating button to open route planning modal */}
+      {!modalVisible && !routeData && !infoModalVisible && !isInfoModalMinimized && (
         <TouchableOpacity
           style={styles.openModalButton}
           onPress={() => setModalVisible(true)}
@@ -217,6 +323,47 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   openModalText: {
+    fontWeight: 'bold',
+  },
+  routeSummaryButton: {
+    position: 'absolute',
+    bottom: 20,
+    alignSelf: 'center',
+    backgroundColor: 'white',
+    paddingHorizontal: 15,
+    paddingVertical: 12,
+    borderRadius: 30,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+    flexDirection: 'row',
+    alignItems: 'center',
+    maxWidth: '80%'
+  },
+  summaryIconContainer: {
+    backgroundColor: '#f0f6ff',
+    padding: 8,
+    borderRadius: 20,
+    marginRight: 10
+  },
+  summaryTextContainer: {
+    flexDirection: 'row',
+    flex: 1,
+    marginRight: 10,
+  },
+  summaryDuration: {
+    fontWeight: 'bold',
+    marginRight: 8,
+  },
+  summaryDistance: {
+    color: '#666',
+  },
+  summaryText: {
     fontWeight: 'bold',
   },
 });
