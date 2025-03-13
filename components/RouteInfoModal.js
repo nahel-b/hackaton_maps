@@ -298,17 +298,17 @@ const RouteInfoModal = ({ visible, routeData, onClose, transportMode, stopTimesD
                           // Make sure data exists and has at least one entry
                           if (!data || !data.length || !data[0].pattern) return false;
                           
-                          // Extract the route identifier from pattern
-                          // The pattern.shortDesc typically contains the route name
-                          // For example "GRENOBLE OXFORD" for route B
-                          const patternDesc = data[0].pattern.shortDesc || '';
-                          const patternId = data[0].pattern.id || '';
+                          const pattern = data[0].pattern;
+                          const patternDesc = pattern.shortDesc || '';
+                          const patternId = pattern.id || '';
                           
-                          // Check if the pattern id contains the route or if shortDesc contains it
+                          // More flexible matching logic:
+                          // 1. Check pattern ID (most reliable)
+                          // 2. Check if shortDesc contains the route code
                           return patternId.includes(`:${stop.route}:`) || 
-                                 patternDesc.startsWith(stop.route + ' ') ||
-                                 // Also check the first character in case shortDesc doesn't exactly match
-                                 (stop.route.length === 1 && patternDesc.includes(stop.route));
+                                 patternDesc.includes(stop.route) ||
+                                 // For cases where route might be written differently
+                                 (pattern.desc && pattern.desc.includes(stop.route));
                         });
                         
                         return (
