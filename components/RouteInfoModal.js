@@ -18,7 +18,10 @@ const RouteInfoModal = ({ visible, routeData, onClose, transportMode, stopTimesD
 
   // Create pan responder for drag gestures
   const panResponder = PanResponder.create({
-    onStartShouldSetPanResponder: () => true,
+    onMoveShouldSetPanResponder: (evt, gestureState) => {
+      // Only respond to vertical gestures near the top of the modal
+      return gestureState.dy > 0 && evt.nativeEvent.locationY < 50;
+    },
     onPanResponderMove: (e, gesture) => {
       if (gesture.dy > 0) { // Dragging down
         modalHeight.setValue(FULL_MODAL_HEIGHT - gesture.dy);
@@ -169,8 +172,6 @@ const RouteInfoModal = ({ visible, routeData, onClose, transportMode, stopTimesD
       animationType="slide"
       transparent={true}
       visible={visible}
-      // Add pointerEvents property to the Modal
-       pointerEvents='none'
     >
       <View 
       
@@ -193,7 +194,7 @@ const RouteInfoModal = ({ visible, routeData, onClose, transportMode, stopTimesD
             }
           ]}
           // Add pointerEvents to the Animated.View as well
-          pointerEvents={isMinimized ? 'box-none' : 'auto'}
+          //pointerEvents={isMinimized ? 'box-none' : 'auto'}
           {...(isMinimized ? {} : panResponder.panHandlers)}
         >
           {/* Drag handle */}
@@ -245,121 +246,127 @@ const RouteInfoModal = ({ visible, routeData, onClose, transportMode, stopTimesD
                 </View>
               </View>
 
-              <ScrollView contentContainerStyle={styles.detailsContainer}>
-                {/* Informations détaillées */}
-                {/* <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Date:</Text>
-                  <Text style={styles.infoValue}>{formatDate(itinerary.startTime)}</Text>
-                </View>
-                
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Heure départ:</Text>
-                  <Text style={styles.infoValue}>{formatTime(itinerary.startTime)}</Text>
-                </View>
-                
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Heure arrivée:</Text>
-                  <Text style={styles.infoValue}>{formatTime(itinerary.endTime)}</Text>
-                </View>
-                
-                <View style={styles.infoRow}>
-                  <Text style={styles.infoLabel}>Distance:</Text>
-                  <Text style={styles.infoValue}>{formatDistance(itinerary.walkDistance)}</Text>
-                </View> */}
+                <ScrollView 
+                  style={styles.scrollView}
+                  contentContainerStyle={styles.scrollViewContent}
+                  showsVerticalScrollIndicator={true}
+                >
 
-                {/* Afficher l'élévation pour les modes vélo et marche */}
-                {(transportMode === 'walking' || transportMode === 'bicycle') && itinerary.elevationGained && (
-                  <>
-                    <View style={styles.infoRow}>
-                      <Text style={styles.infoLabel}>Montée:</Text>
-                      <Text style={styles.infoValue}>{Math.round(itinerary.elevationGained)} m</Text>
-                    </View>
-                    
-                    <View style={styles.infoRow}>
-                      <Text style={styles.infoLabel}>Descente:</Text>
-                      <Text style={styles.infoValue}>{Math.round(itinerary.elevationLost)} m</Text>
-                    </View>
-                  </>
-                )}
-                
-                {/* Transit stops and departure times */}
-                {transitStops.length > 0 && (
-                  <View style={styles.transitTimesContainer}>
-                    <Text style={styles.sectionTitle}>Prochains départs:</Text>
-                    {transitStops.map((stop, stopIndex) => {
-                      //console.log(JSON.stringify(stopTimesData));
-                      const stopData = Object.values(stopTimesData).find(data => {
-                        // Make sure data exists and has at least one entry
-                        if (!data || !data.length || !data[0].pattern) return false;
-                        
-                        // Extract the route identifier from pattern
-                        // The pattern.shortDesc typically contains the route name
-                        // For example "GRENOBLE OXFORD" for route B
-                        const patternDesc = data[0].pattern.shortDesc || '';
-                        const patternId = data[0].pattern.id || '';
-                        
-                        // Check if the pattern id contains the route or if shortDesc contains it
-                        return patternId.includes(`:${stop.route}:`) || 
-                               patternDesc.startsWith(stop.route + ' ') ||
-                               // Also check the first character in case shortDesc doesn't exactly match
-                               (stop.route.length === 1 && patternDesc.includes(stop.route));
-                      });
+                  {/* Informations détaillées */}
+                  {/* <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Date:</Text>
+                    <Text style={styles.infoValue}>{formatDate(itinerary.startTime)}</Text>
+                  </View>
+                  
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Heure départ:</Text>
+                    <Text style={styles.infoValue}>{formatTime(itinerary.startTime)}</Text>
+                  </View>
+                  
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Heure arrivée:</Text>
+                    <Text style={styles.infoValue}>{formatTime(itinerary.endTime)}</Text>
+                  </View>
+                  
+                  <View style={styles.infoRow}>
+                    <Text style={styles.infoLabel}>Distance:</Text>
+                    <Text style={styles.infoValue}>{formatDistance(itinerary.walkDistance)}</Text>
+                  </View> */}
+
+                  {/* Afficher l'élévation pour les modes vélo et marche */}
+                  {(transportMode === 'walking' || transportMode === 'bicycle') && itinerary.elevationGained && (
+                    <>
+                      <View style={styles.infoRow}>
+                        <Text style={styles.infoLabel}>Montée:</Text>
+                        <Text style={styles.infoValue}>{Math.round(itinerary.elevationGained)} m</Text>
+                      </View>
                       
-                      return (
-                        <View key={stopIndex} style={styles.transitStopContainer}>
-                          <View style={[styles.transitRouteTag, { backgroundColor: stop.color }]}>
-                            <Text style={styles.transitRouteText}>{stop.route}</Text>
-                          </View>
-                          <View style={styles.transitStopInfo}>
-                            <Text style={styles.transitStopName}>{stop.stopName}</Text>
-                            {stop.headsign && (
-                              <Text style={styles.transitHeadsign}>Direction: {stop.headsign}</Text>
-                            )}
-                            <View style={styles.transitTimesWrapper}>
-                              {!stopData ? (
-                                <Text style={styles.noTimesText}>Horaires non disponibles</Text>
-                              ) : (
-                                stopData[0].times && stopData[0].times.slice(0, 3).map((time, timeIndex) => (
-                                  <View key={timeIndex} style={styles.transitTimeItem}>
-                                    <Text style={styles.transitTime}>
-                                      {formatStopTime(time.serviceDay, time.realtimeDeparture)}
-                                      {time.realtime && " "}
-                                      {time.realtime && <Text style={styles.realtimeIndicator}>•</Text>}
-                                    </Text>
-                                  </View>
-                                ))
+                      <View style={styles.infoRow}>
+                        <Text style={styles.infoLabel}>Descente:</Text>
+                        <Text style={styles.infoValue}>{Math.round(itinerary.elevationLost)} m</Text>
+                      </View>
+                    </>
+                  )}
+                  
+                  {/* Transit stops and departure times */}
+                  {transitStops.length > 0 && (
+                    <View style={styles.transitTimesContainer}>
+                      <Text style={styles.sectionTitle}>Prochains départs:</Text>
+                      {transitStops.map((stop, stopIndex) => {
+                        console.log(JSON.stringify(stopTimesData));
+                        const stopData = Object.values(stopTimesData).find(data => {
+                          // Make sure data exists and has at least one entry
+                          if (!data || !data.length || !data[0].pattern) return false;
+                          
+                          // Extract the route identifier from pattern
+                          // The pattern.shortDesc typically contains the route name
+                          // For example "GRENOBLE OXFORD" for route B
+                          const patternDesc = data[0].pattern.shortDesc || '';
+                          const patternId = data[0].pattern.id || '';
+                          
+                          // Check if the pattern id contains the route or if shortDesc contains it
+                          return patternId.includes(`:${stop.route}:`) || 
+                                 patternDesc.startsWith(stop.route + ' ') ||
+                                 // Also check the first character in case shortDesc doesn't exactly match
+                                 (stop.route.length === 1 && patternDesc.includes(stop.route));
+                        });
+                        
+                        return (
+                          <View key={stopIndex} style={styles.transitStopContainer}>
+                            <View style={[styles.transitRouteTag, { backgroundColor: stop.color }]}>
+                              <Text style={styles.transitRouteText}>{stop.route}</Text>
+                            </View>
+                            <View style={styles.transitStopInfo}>
+                              <Text style={styles.transitStopName}>{stop.stopName}</Text>
+                              {stop.headsign && (
+                                <Text style={styles.transitHeadsign}>Direction: {stop.headsign}</Text>
                               )}
+                              <View style={styles.transitTimesWrapper}>
+                                {!stopData ? (
+                                  <Text style={styles.noTimesText}>Horaires non disponibles</Text>
+                                ) : (
+                                  stopData[0].times && stopData[0].times.slice(0, 3).map((time, timeIndex) => (
+                                    <View key={timeIndex} style={styles.transitTimeItem}>
+                                      <Text style={styles.transitTime}>
+                                        {formatStopTime(time.serviceDay, time.realtimeDeparture)}
+                                        {time.realtime && " "}
+                                        {time.realtime && <Text style={styles.realtimeIndicator}>•</Text>}
+                                      </Text>
+                                    </View>
+                                  ))
+                                )}
+                              </View>
                             </View>
                           </View>
-                        </View>
-                      );
-                    })}
-                  </View>
-                )}
+                        );
+                      })}
+                    </View>
+                  )}
 
-                {/* Détails des segments de trajet */}
-                {itinerary.legs && itinerary.legs.length > 0 && (
-                  <>
-                    <Text style={styles.sectionTitle}>Étapes:</Text>
-                    {itinerary.legs.map((leg, index) => (
-                      <View key={index} style={styles.legContainer}>
-                        <View style={styles.legIconContainer}>
-                          <Ionicons 
-                            name={leg.mode === 'WALK' ? 'walk' : (leg.mode === 'BICYCLE' ? 'bicycle' : (leg.mode === 'CAR' ? 'car' : 'bus'))} 
-                            size={20} 
-                            color="#4285F4" 
-                          />
+                  {/* Détails des segments de trajet */}
+                  {itinerary.legs && itinerary.legs.length > 0 && (
+                    <>
+                      <Text style={styles.sectionTitle}>Étapes:</Text>
+                      {itinerary.legs.map((leg, index) => (
+                        <View key={index} style={styles.legContainer}>
+                          <View style={styles.legIconContainer}>
+                            <Ionicons 
+                              name={leg.mode === 'WALK' ? 'walk' : (leg.mode === 'BICYCLE' ? 'bicycle' : (leg.mode === 'CAR' ? 'car' : 'bus'))} 
+                              size={20} 
+                              color="#4285F4" 
+                            />
+                          </View>
+                          <View style={styles.legInfo}>
+                            <Text style={styles.legMode}>{leg.mode === 'WALK' ? 'Marche' : (leg.mode === 'BICYCLE' ? 'Vélo' : (leg.mode === 'CAR' ? 'Voiture' : 'Transport en commun'))}</Text>
+                            <Text>{formatDistance(leg.distance)} • {formatDuration(leg.duration)}</Text>
+                            <Text style={styles.legTime}>{formatTime(leg.startTime)} - {formatTime(leg.endTime)}</Text>
+                          </View>
                         </View>
-                        <View style={styles.legInfo}>
-                          <Text style={styles.legMode}>{leg.mode === 'WALK' ? 'Marche' : (leg.mode === 'BICYCLE' ? 'Vélo' : (leg.mode === 'CAR' ? 'Voiture' : 'Transport en commun'))}</Text>
-                          <Text>{formatDistance(leg.distance)} • {formatDuration(leg.duration)}</Text>
-                          <Text style={styles.legTime}>{formatTime(leg.startTime)} - {formatTime(leg.endTime)}</Text>
-                        </View>
-                      </View>
-                    ))}
-                  </>
-                )}
-              </ScrollView>
+                      ))}
+                    </>
+                  )}
+
+                </ScrollView>
               
               {/* Bouton pour fermer */}
               <TouchableOpacity
@@ -440,8 +447,8 @@ const styles = StyleSheet.create({
     marginBottom: 4,
   },
   detailsContainer: {
-    //height: SCREEN_HEIGHT * 0.09,
-    //flex: 1,
+    flex : 1
+   //paddingBottom: SCREEN_HEIGHT * 0.2,
   },
   infoRow: {
     flexDirection: 'row',
@@ -449,13 +456,6 @@ const styles = StyleSheet.create({
     paddingVertical: 8,
     borderBottomWidth: 1,
     borderBottomColor: '#f0f0f0',
-  },
-  infoLabel: {
-    fontWeight: '500',
-    color: '#666',
-  },
-  infoValue: {
-    fontWeight: '600',
   },
   sectionTitle: {
     fontSize: 16,
@@ -595,6 +595,13 @@ const styles = StyleSheet.create({
   closeButtonText: {
     fontSize: 16,
     color: '#666',
+  },
+  scrollView: {
+    flex: 1,
+    width: '100%',
+  },
+  scrollViewContent: {
+    paddingBottom: 20,
   }
 });
 
