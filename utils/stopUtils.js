@@ -10,6 +10,7 @@ export async function fetchRouteStops(routeId) {
   if (routeStopsCache[routeId]) {
     return routeStopsCache[routeId];
   }
+  console.log('Fetching stops for route:', routeId);
   // If not cached, make the API call
   const url = `https://data.mobilites-m.fr/api/routers/default/index/routes/${routeId}/stops`;
   try {

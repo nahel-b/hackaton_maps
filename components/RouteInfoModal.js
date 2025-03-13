@@ -223,15 +223,14 @@ const RouteInfoModal = ({ visible, routeData, onClose, transportMode, stopTimesD
               </TouchableOpacity>
             </TouchableOpacity>
           ) : (
-            // Full view
             <>
               <View style={styles.modalHeader}>
                 <Text style={styles.modalTitle}>Détails de l'itinéraire</Text>
                 <TouchableOpacity 
                   style={styles.closeRouteButton}
-                  onPress={onReset}
+                  onPress={onMinimize}
                 >
-                  <Ionicons name="close-circle" size={28} color="#FF5252" />
+                  <Ionicons name="chevron-down" size={24} color="#666" />
                 </TouchableOpacity>
               </View>
               
@@ -288,7 +287,7 @@ const RouteInfoModal = ({ visible, routeData, onClose, transportMode, stopTimesD
                   <View style={styles.transitTimesContainer}>
                     <Text style={styles.sectionTitle}>Prochains départs:</Text>
                     {transitStops.map((stop, stopIndex) => {
-                      console.log(JSON.stringify(stopTimesData));
+                      //console.log(JSON.stringify(stopTimesData));
                       const stopData = Object.values(stopTimesData).find(data => {
                         // Make sure data exists and has at least one entry
                         if (!data || !data.length || !data[0].pattern) return false;
@@ -362,12 +361,12 @@ const RouteInfoModal = ({ visible, routeData, onClose, transportMode, stopTimesD
                 )}
               </ScrollView>
               
-              {/* Bouton pour minimiser */}
+              {/* Bouton pour fermer */}
               <TouchableOpacity
-                style={styles.minimizeButton}
-                onPress={onMinimize}
+                style={styles.closeButton}
+                onPress={onReset}
               >
-                <Ionicons name="chevron-down" size={24} color="#666" />
+                <Text style={styles.closeButtonText}>Fermer</Text>
               </TouchableOpacity>
             </>
           )}
@@ -587,6 +586,15 @@ const styles = StyleSheet.create({
     fontStyle: 'italic',
     color: '#999',
     fontSize: 12,
+  },
+  closeButton: {
+    alignItems: 'center',
+    paddingVertical: 10,
+    marginTop: 10,
+  },
+  closeButtonText: {
+    fontSize: 16,
+    color: '#666',
   }
 });
 

@@ -185,8 +185,10 @@ export default function App() {
     // Fetch stop times for all transit stops
     await Promise.all(transitStops.map(async (point, index) => {
       try {
-        // Get stop code using the utility function
-        const stopCode = await getStopCodeByName(point.route, point.stopName);
+        
+        console.log('Fetching stop times for:', point);
+
+        const stopCode = await getStopCodeByName(point.routeId, point.stopName);
         console.log('Stop code:', stopCode);
         if (!stopCode) {
           console.error(`Stop code not found for ${point.stopName}`);
