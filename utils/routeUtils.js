@@ -105,3 +105,95 @@ export const parseRouteGeometry = (data, apiMode = 'WALK') => {
 
   return allCoords;
 };
+
+export const getTramColor = (tram) => {
+        // Mapping des couleurs de tram
+        const tramColors = {
+            "A": "#3376B8",
+            "B": "#479A45",
+            "C": "#C20078",
+            "D": "#DE9917",
+            "E": "#533786"
+        };
+        
+        // Si le tram existe dans notre mapping, retourner sa couleur
+        if (tramColors[tram]) {
+            return tramColors[tram];
+        }
+        
+        // Couleur par défaut si le tram n'est pas reconnu
+        return "#777777";
+    };
+
+
+
+
+// Extract transit points where transport mode changes
+export const extractTransitPoints = (data, apiMode = 'WALK') => {
+  if (!data || !data.plan || !data.plan.itineraries || data.plan.itineraries.length === 0) {
+    return [];
+  }
+
+  // Get the appropriate itinerary
+  const itinerary = selectAppropriateItinerary(data.plan.itineraries, apiMode);
+  if (!itinerary) return [];
+  //console.log("Itinéraire sélectionné:", itinerary);
+  const transitPoints = [];
+  
+  // Process each leg to find transit segments
+// Skip the first leg by using slice(1)
+itinerary.legs.slice(1).forEach(leg => {
+    //console.log('Leg:', leg);
+
+    console.log('Leg:', leg);
+
+    if ( leg.from && leg.from.lon ) {
+      let routeInfo = '';
+      
+      // Get route information
+      if (leg.routeLongName) {
+        routeInfo = leg.routeLongName;
+      }
+      if (leg.route) {
+        routeInfo = leg.route;
+      } 
+      if (leg.routeShortName) {
+        routeInfo = leg.routeShortName;
+      } 
+
+
+    // Check if the route is a tram (letters A, B, C, D, E)
+    if (routeInfo && /^[A-Ea-e]$/.test(routeInfo)) {
+
+        // Convert to uppercase for consistency
+        routeInfo = routeInfo.toUpperCase();
+        // Get the color for this tram line
+        const color = getTramColor(routeInfo);
+        // Set the color property to be used in the transit point
+        leg.color = color;
+        console.log('Tram color:', color);
+    }
+     
+      //console.log('Route info:', routeInfo);
+
+
+      transitPoints.push({
+        coordinate: {
+          latitude: parseFloat(leg.from.lat),
+          longitude: parseFloat(leg.from.lon)
+        },
+        mode: leg.mode,
+        route: routeInfo,
+        agencyName: leg.agencyName || '',
+        stopName: leg.from.name || '',
+        color: leg.color || '',
+        headsign: leg.headsign || ''
+      });
+    }
+  });
+  
+  return transitPoints;
+};
+
+
+

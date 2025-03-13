@@ -3,7 +3,7 @@ import React, { useState } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { convertionLieu, itineraire } from './assets/api';
-import { getApiTransportMode, parseRouteGeometry } from './utils/routeUtils';
+import { getApiTransportMode, parseRouteGeometry, extractTransitPoints } from './utils/routeUtils';
 import RouteMap from './components/RouteMap';
 import RouteModal from './components/RouteModal';
 import RouteInfoModal from './components/RouteInfoModal'; // Importez le nouveau composant
@@ -26,6 +26,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [startCoords, setStartCoords] = useState(null);
   const [endCoords, setEndCoords] = useState(null);
+  const [transitPoints, setTransitPoints] = useState([]);
 
   // Search for route
   const searchRoute = async () => {
@@ -67,6 +68,10 @@ export default function App() {
         const coordinates = parseRouteGeometry(routeData, apiTransportMode);
         setRouteCoordinates(coordinates);
         
+        // Extract transit points
+        const extractedTransitPoints = extractTransitPoints(routeData, apiTransportMode);
+        setTransitPoints(extractedTransitPoints);
+        
         // Update map region to fit route
         if (coordinates.length > 0) {
           setRegion({
@@ -100,6 +105,7 @@ export default function App() {
         routeCoordinates={routeCoordinates}
         startCoords={startCoords}
         endCoords={endCoords}
+        transitPoints={transitPoints}
         onRegionChangeComplete={setRegion}
       />
       
