@@ -30,6 +30,8 @@ export default function App() {
   const [endCoords, setEndCoords] = useState(null);
   const [transitPoints, setTransitPoints] = useState([]);
   const [stopTimesData, setStopTimesData] = useState({});
+  const [walkSpeed, setWalkSpeed] = useState(3);
+  const [bikeSpeed, setBikeSpeed] = useState(11);
 
   // Format duration helper function
   const formatDuration = (seconds) => {
@@ -131,7 +133,14 @@ export default function App() {
       const apiTransportMode = getApiTransportMode(transportMode, wheelchairMode);
 
       // Get route
-      const routeData = await itineraire(startCoords, endCoords, apiTransportMode, wheelchairMode);
+      const routeData = await itineraire(
+        startCoords, 
+        endCoords, 
+        apiTransportMode, 
+        wheelchairMode,
+        transportMode === 'walking' ? walkSpeed : null,
+        transportMode === 'bicycle' ? bikeSpeed : null
+      );
       
       if (routeData) {
         // Stocker les données complètes de l'itinéraire
@@ -216,6 +225,14 @@ export default function App() {
     return stopTimesResult;
   };
 
+  const handleWalkSpeedChange = (value) => {
+    setWalkSpeed(value);
+  };
+
+  const handleBikeSpeedChange = (value) => {
+    setBikeSpeed(value);
+  };
+
   return (
     <View style={styles.container}>
       {/* Carte en arrière-plan */}
@@ -236,6 +253,8 @@ export default function App() {
         endLocation={endLocation}
         transportMode={transportMode}
         wheelchairMode={wheelchairMode}
+        walkSpeed={walkSpeed}
+        bikeSpeed={bikeSpeed}
         loading={loading}
         onClose={() => setModalVisible(false)}
         onSearch={searchRoute}
@@ -243,6 +262,8 @@ export default function App() {
         onEndLocationChange={setEndLocation}
         onTransportModeChange={setTransportMode}
         onWheelchairModeChange={setWheelchairMode}
+        onWalkSpeedChange={handleWalkSpeedChange}
+        onBikeSpeedChange={handleBikeSpeedChange}
       />
 
       {/* Modal d'informations d'itinéraire */}

@@ -23,7 +23,7 @@ const convertionLieu = async (searchQuery) => {
 };
 
 
-const itineraire = async (from, to, mode = 'WALK', wheelchair = false) => {
+const itineraire = async (from, to, mode = 'WALK', wheelchair = false, walkSpeed = null, bikeSpeed = null) => {
   try {
     const fromCoords = `${from.lat},${from.lon}`;
     const toCoords = `${to.lat},${to.lon}`;
@@ -36,6 +36,16 @@ const itineraire = async (from, to, mode = 'WALK', wheelchair = false) => {
       url += '&wheelchair=true';
     }
     
+    // Add walkSpeed if provided
+    if (walkSpeed) {
+      url += `&walkSpeed=${walkSpeed}`;
+    }
+    
+    // Add bikeSpeed if provided
+    if (bikeSpeed) {
+      url += `&bikeSpeed=${bikeSpeed}`;
+    }
+    
     const response = await fetch(url);
     
     if (!response.ok) {
@@ -43,7 +53,6 @@ const itineraire = async (from, to, mode = 'WALK', wheelchair = false) => {
     }
     
     const data = await response.json();
-    //console.log("Itinéraire récupéré:", data);
     return data;
   } catch (error) {
     console.error("Erreur lors de la récupération de l'itinéraire:", error);
