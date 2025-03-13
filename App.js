@@ -24,12 +24,17 @@ export default function App() {
   const [routeCoordinates, setRouteCoordinates] = useState([]);
   const [routeData, setRouteData] = useState(null); // Stocke les données complètes d'itinéraire
   const [loading, setLoading] = useState(false);
+  const [startCoords, setStartCoords] = useState(null);
+  const [endCoords, setEndCoords] = useState(null);
 
   // Search for route
   const searchRoute = async () => {
     if (!startLocation || !endLocation) {
-      Alert.alert('Erreur', 'Veuillez saisir un point de départ et une destination');
-      return;
+      
+      
+      Alert.alert('Champs requis', 'Veuillez entrer un lieu de départ et une destination');
+      setStartLocation(startLocation || 'Ile Verte, Grenoble');
+      setEndLocation(endLocation || 'Rue Ampère, Grenoble');
     }
 
     setLoading(true);
@@ -43,6 +48,10 @@ export default function App() {
         setLoading(false);
         return;
       }
+
+      // Save the coordinates
+      setStartCoords(startCoords);
+      setEndCoords(endCoords);
 
       // Get API transport mode
       const apiTransportMode = getApiTransportMode(transportMode, wheelchairMode);
@@ -89,6 +98,8 @@ export default function App() {
       <RouteMap
         region={region}
         routeCoordinates={routeCoordinates}
+        startCoords={startCoords}
+        endCoords={endCoords}
         onRegionChangeComplete={setRegion}
       />
       
