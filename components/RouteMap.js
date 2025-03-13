@@ -1,10 +1,19 @@
-import React from 'react';
-import { StyleSheet, View, Text } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, View, Text, ActivityIndicator } from 'react-native';
 import MapView, { Polyline, Marker, Callout } from 'react-native-maps';
 import { Ionicons, FontAwesome5, MaterialIcons } from '@expo/vector-icons';
+import { getStopCodeByName } from '../utils/stopUtils';
 
-const RouteMap = ({ region, routeCoordinates, startCoords, endCoords, transitPoints = [], onRegionChangeComplete }) => {
-  // Get icon for transit mode
+const RouteMap = ({ 
+  region, 
+  routeCoordinates, 
+  startCoords, 
+  endCoords, 
+  transitPoints = [], 
+  stopTimesData = {}, 
+  onRegionChangeComplete 
+}) => {
+
   const getTransitIcon = (mode) => {
     switch(mode) {
       case 'BUS': return <FontAwesome5 name="bus" size={18} color="white" />;
@@ -13,11 +22,9 @@ const RouteMap = ({ region, routeCoordinates, startCoords, endCoords, transitPoi
       case 'RAIL': return <MaterialIcons name="train" size={18} color="white" />;
       case 'WALK': return <Ionicons name="walk" size={18} color="white" />;
       default: return <Ionicons name="directions-transit" size={18} color="white" />;
-      
     }
   };
   
-  // Get color for transit mode
   const getTransitColor = (mode) => {
     switch(mode) {
       case 'BUS': return '#0D47A1';
@@ -28,13 +35,17 @@ const RouteMap = ({ region, routeCoordinates, startCoords, endCoords, transitPoi
     }
   };
 
+  const formatTime = (serviceDay, seconds) => {
+    const date = new Date((serviceDay + seconds) * 1000);
+    return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
   return (
     <MapView
       style={styles.map}
       region={region}
       onRegionChangeComplete={onRegionChangeComplete}
     >
-      {/* Draw the route if available */}
       {routeCoordinates.length > 0 && (
         <Polyline
           coordinates={routeCoordinates}
@@ -43,7 +54,6 @@ const RouteMap = ({ region, routeCoordinates, startCoords, endCoords, transitPoi
         />
       )}
       
-      {/* Start marker */}
       {startCoords && (
         <Marker
           coordinate={{
@@ -57,7 +67,6 @@ const RouteMap = ({ region, routeCoordinates, startCoords, endCoords, transitPoi
         </Marker>
       )}
       
-      {/* Transit points */}
       {transitPoints.map((point, index) => (
         <Marker
           key={`transit-${index}`}
@@ -65,14 +74,12 @@ const RouteMap = ({ region, routeCoordinates, startCoords, endCoords, transitPoi
           anchor={{ x: 0.5, y: 0.5 }}
         >
           <View style={[styles.transitPoint, { backgroundColor: point.color ? point.color : getTransitColor(point.mode) }]}>
-           
             {getTransitIcon(point.mode)}
-            {/* <FontAwesome5 name={getTransitIcon(point.mode)} size={18} color="white" /> */}
             {point.route ? (
               <Text style={styles.routeText}>{point.route}</Text>
             ) : null}
           </View>
-          <Callout tooltip visible >
+          <Callout tooltip>
             <View style={styles.calloutView}>
               <Text style={styles.calloutTitle}>
                 {point.mode === 'BUS' ? 'Bus' : point.mode === 'TRAM' ? 'Tram' : 'Transport'} {point.route}
@@ -83,12 +90,31 @@ const RouteMap = ({ region, routeCoordinates, startCoords, endCoords, transitPoi
               {point.agencyName ? (
                 <Text style={styles.calloutText}>{point.agencyName}</Text>
               ) : null}
+              
+              {(point.mode === 'BUS' || point.mode === 'TRAM') && (
+                <View style={styles.realTimeContainer}>
+                  <Text style={styles.realTimeTitle}>Prochains départs:</Text>
+                  
+                  {!stopTimesData[index] ? (
+                    <Text style={styles.calloutText}>Pas de données disponibles</Text>
+                  ) : stopTimesData[index].length > 0 && stopTimesData[index][0].times ? (
+                    stopTimesData[index][0].times.slice(0, 3).map((time, timeIndex) => (
+                      <Text key={timeIndex} style={styles.timeText}>
+                        {formatTime(time.serviceDay, time.realtimeDeparture)} 
+                        {time.realtime ? ' (temps réel)' : ''}
+                        {time.occupancyId && ` · ${time.occupancy}`}
+                      </Text>
+                    ))
+                  ) : (
+                    <Text style={styles.calloutText}>Aucun départ prévu</Text>
+                  )}
+                </View>
+              )}
             </View>
           </Callout>
         </Marker>
       ))}
       
-      {/* End marker */}
       {endCoords && (
         <Marker
           coordinate={{
@@ -127,7 +153,7 @@ const styles = StyleSheet.create({
     marginLeft: 2,
   },
   calloutView: {
-    width: 150,
+    width: 200,
     padding: 10,
     backgroundColor: 'white',
     borderRadius: 10,
@@ -141,6 +167,21 @@ const styles = StyleSheet.create({
   },
   calloutText: {
     fontSize: 12,
+  },
+  realTimeContainer: {
+    marginTop: 8,
+    paddingTop: 8,
+    borderTopWidth: 1,
+    borderTopColor: '#eee',
+  },
+  realTimeTitle: {
+    fontWeight: 'bold',
+    fontSize: 12,
+    marginBottom: 4,
+  },
+  timeText: {
+    fontSize: 12,
+    marginVertical: 2,
   }
 });
 

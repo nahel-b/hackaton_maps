@@ -145,7 +145,6 @@ export const extractTransitPoints = (data, apiMode = 'WALK') => {
 itinerary.legs.slice(1).forEach(leg => {
     //console.log('Leg:', leg);
 
-    console.log('Leg:', leg);
 
     if ( leg.from && leg.from.lon ) {
       let routeInfo = '';
@@ -187,7 +186,8 @@ itinerary.legs.slice(1).forEach(leg => {
         agencyName: leg.agencyName || '',
         stopName: leg.from.name || '',
         color: leg.color || '',
-        headsign: leg.headsign || ''
+        headsign: leg.headsign || '',
+        routeId : leg.routeId || ''
       });
     }
   });

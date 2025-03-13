@@ -7,6 +7,7 @@ import { getApiTransportMode, parseRouteGeometry, extractTransitPoints } from '.
 import RouteMap from './components/RouteMap';
 import RouteModal from './components/RouteModal';
 import RouteInfoModal from './components/RouteInfoModal'; // Importez le nouveau composant
+import { getStopCodeByName } from './utils/stopUtils';
 
 export default function App() {
   const [modalVisible, setModalVisible] = useState(true);
@@ -27,6 +28,7 @@ export default function App() {
   const [startCoords, setStartCoords] = useState(null);
   const [endCoords, setEndCoords] = useState(null);
   const [transitPoints, setTransitPoints] = useState([]);
+  const [stopTimesData, setStopTimesData] = useState({});
 
   // Search for route
   const searchRoute = async () => {
@@ -72,6 +74,10 @@ export default function App() {
         const extractedTransitPoints = extractTransitPoints(routeData, apiTransportMode);
         setTransitPoints(extractedTransitPoints);
         
+        // Fetch all stop times data
+        const allStopTimesData = await fetchAllStopTimes(extractedTransitPoints);
+        setStopTimesData(allStopTimesData);
+        
         // Update map region to fit route
         if (coordinates.length > 0) {
           setRegion({
@@ -97,6 +103,46 @@ export default function App() {
     }
   };
 
+  const fetchAllStopTimes = async (transitPoints) => {
+    const stopTimesResult = {};
+    
+    // Process only BUS and TRAM points
+    const transitStops = transitPoints.filter(
+      point => point.mode === 'BUS' || point.mode === 'TRAM'
+    );
+    
+    // Fetch stop times for all transit stops
+    await Promise.all(transitStops.map(async (point, index) => {
+      try {
+        // Get stop code using the utility function
+        const stopCode = await getStopCodeByName(point.route, point.stopName);
+        console.log('Stop code:', stopCode);
+        if (!stopCode) {
+          console.error(`Stop code not found for ${point.stopName}`);
+          return;
+        }
+        
+        // Fetch real-time data
+        const response = await fetch(`https://data.mobilites-m.fr/api/routers/default/index/stops/${stopCode}/stoptimes`, {
+          headers: {
+            origin: 'mon_appli'
+          }
+        });
+        
+        if (!response.ok) {
+          throw new Error(`Failed to fetch stop times: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        stopTimesResult[index] = data;
+      } catch (error) {
+        console.error(`Error fetching stop times for ${point.stopName}:`, error);
+      }
+    }));
+    
+    return stopTimesResult;
+  };
+
   return (
     <View style={styles.container}>
       {/* Carte en arrière-plan */}
@@ -106,6 +152,7 @@ export default function App() {
         startCoords={startCoords}
         endCoords={endCoords}
         transitPoints={transitPoints}
+        stopTimesData={stopTimesData} // Pass the prefetched data
         onRegionChangeComplete={setRegion}
       />
       
