@@ -357,18 +357,50 @@ const RouteInfoModal = ({ visible, routeData, onClose, transportMode, stopTimesD
                             />
                           </View>
                           <View style={styles.legInfo}>
-                            <Text style={styles.legMode}>{leg.mode === 'WALK' ? 'Marche' : (leg.mode === 'BICYCLE' ? 'Vélo' : (leg.mode === 'CAR' ? 'Voiture' : 'Transport en commun'))}</Text>
-                            <Text>{formatDistance(leg.distance)} • {formatDuration(leg.duration)}</Text>
-                            <Text style={styles.legTime}>{formatTime(leg.startTime)} - {formatTime(leg.endTime)}</Text>
-                          </View>
-                        </View>
-                      ))}
-                    </>
-                  )}
+                            <Text style={styles.legMode}>
+                              {leg.mode === 'WALK' ? 'Marche' : 
+                               leg.mode === 'BICYCLE' ? 'Vélo' : 
+                               leg.mode === 'CAR' ? 'Voiture' : 
+                               // For transit modes, display line and direction when available
+                                 leg.routeShortName ? (
+                                 <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+                                   <View style={[
+                                   { 
+                                    width: 20,
+                                    height: 20,
+                                    borderRadius: 17.5,
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    marginRight: 5,
+                                  }, 
+                                   {backgroundColor: leg.mode === 'TRAM' ? 
+                                     getTramColor(leg.routeShortName) : 
+                                     '#0D47A1'}
+                                   ]}>
+                                   <Text style={{fontSize : 13,color : "white",fontWeight : "bold"}}>{leg.routeShortName}</Text>
+                                   </View>
+                                   {leg.headsign && (
+                                   <Text style={styles.headsignText}>→ {leg.headsign}</Text>
+                                   )}
+                                 </View>
+                                 ) : leg.headsign ? (
+                                 <View style={styles.routeWithHeadsign}>
+                                   <Text>Transport en commun</Text>
+                                   <Text style={styles.headsignText}>→ {leg.headsign}</Text>
+                                 </View>
+                                 ) : 'Transport en commun'}
+                              </Text>
+                              <Text>{formatDistance(leg.distance)} • {formatDuration(leg.duration)}</Text>
+                              <Text style={styles.legTime}>{formatTime(leg.startTime)} - {formatTime(leg.endTime)}</Text>
+                              </View>
+                            </View>
+                            ))}
+                          </>
+                          )}
 
-                </ScrollView>
-              
-              {/* Bouton pour fermer */}
+                        </ScrollView>
+                        
+                        {/* Bouton pour fermer */}
               <TouchableOpacity
                 style={styles.closeButton}
                 onPress={onReset}
@@ -460,7 +492,7 @@ const styles = StyleSheet.create({
   sectionTitle: {
     fontSize: 16,
     fontWeight: 'bold',
-    marginTop: 0,
+    marginTop: 10,
     marginBottom: 5,
   },
   legContainer: {

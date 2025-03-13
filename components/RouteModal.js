@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Modal, View, Text, TextInput, TouchableOpacity } from 'react-native';
-import { Ionicons } from '@expo/vector-icons';
+import { FontAwesome5, Ionicons } from '@expo/vector-icons';
 import { Switch } from 'react-native'; // Ajoutez l'import du Switch
 
 const RouteModal = ({ 
@@ -25,11 +25,11 @@ const RouteModal = ({
     >
       <View style={styles.centeredView}>
         <View style={styles.modalView}>
-          <Text style={styles.modalTitle}>Planifier un itinéraire</Text>
+          <Text style={styles.modalTitle}>✨Planifier un itinéraire✨</Text>
           
           {/* Input départ */}
           <View style={styles.inputContainer}>
-            <Ionicons name="location" size={24} color="green" />
+            <Ionicons name="location" size={24} color="#888" />
             <TextInput
               style={styles.input}
               placeholder="Point de départ"
@@ -39,13 +39,15 @@ const RouteModal = ({
           </View>
           
           {/* Input arrivée */}
-          <View style={styles.inputContainer}>
-            <Ionicons name="flag" size={24} color="red" />
+          <View style={[styles.inputContainer,{}]}>
+            <View style={{width: 5}}></View>
+            <FontAwesome5 name="flag-checkered" size={20} color="#888" />
             <TextInput
               style={styles.input}
               placeholder="Destination"
               value={endLocation}
               onChangeText={onEndLocationChange}
+              
             />
           </View>
           
@@ -155,7 +157,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     borderWidth: 1,
     borderColor: '#ccc',
-    borderRadius: 10,
+    borderRadius: 15,
     padding: 10,
     marginBottom: 15,
   },
@@ -163,6 +165,7 @@ const styles = StyleSheet.create({
     flex: 1,
     marginLeft: 10,
     height: 40,
+    fontWeight: '500',
   },
   transportContainer: {
     flexDirection: 'row',
