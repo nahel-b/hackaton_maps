@@ -9,7 +9,7 @@ const convertionLieu = async (searchQuery) => {
       const data = await response.json();
       
       if (data.length > 0) {
-        console.log("Résultat :", data[0]); // Affiche le premier résultat
+       // console.log("Résultat :", data[0]); // Affiche le premier résultat
         
         return data[0]; // Renvoie le premier résultat (latitude & longitude)
       } else {
@@ -23,12 +23,18 @@ const convertionLieu = async (searchQuery) => {
 };
 
 
-const itineraire = async (from, to, mode = 'WALK') => {
+const itineraire = async (from, to, mode = 'WALK', wheelchair = false) => {
   try {
     const fromCoords = `${from.lat},${from.lon}`;
     const toCoords = `${to.lat},${to.lon}`;
     
-    const url = `https://data.mobilites-m.fr/api/routers/default/plan?fromPlace=${fromCoords}&toPlace=${toCoords}&mode=${mode}`;
+    // Construire l'URL de base
+    let url = `https://data.mobilites-m.fr/api/routers/default/plan?fromPlace=${fromCoords}&toPlace=${toCoords}&mode=${mode}`;
+    
+    // Ajouter l'option wheelchair si nécessaire
+    if (wheelchair) {
+      url += '&wheelchair=true';
+    }
     
     const response = await fetch(url);
     
@@ -37,7 +43,7 @@ const itineraire = async (from, to, mode = 'WALK') => {
     }
     
     const data = await response.json();
-    console.log("Itinéraire récupéré:", data);
+    //console.log("Itinéraire récupéré:", data);
     return data;
   } catch (error) {
     console.error("Erreur lors de la récupération de l'itinéraire:", error);
