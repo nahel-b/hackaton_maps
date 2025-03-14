@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Modal, View, Text, TextInput, TouchableOpacity, FlatList } from 'react-native';
+import { StyleSheet, Modal, View, Text, TextInput, TouchableOpacity, FlatList, Image } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { FontAwesome5, Ionicons } from '@expo/vector-icons';
 import { Switch } from 'react-native';
@@ -158,7 +158,14 @@ const RouteModal = ({
     >
       <View style={styles.centeredView}>
         <View style={styles.modalView}>
-          <Text style={styles.modalTitle}>✨Planifier un itinéraire✨</Text>
+          {/* Marcus image in top-left corner */}
+          <Image 
+            source={require('../assets/image/marcus-bas.png')} 
+            style={styles.marcusImage}
+            resizeMode="contain"
+          />
+          
+          <Text style={styles.modalTitle}> Planifie l'itinéraire</Text>
           
           {/* Input départ */}
           <View>
@@ -265,7 +272,7 @@ const RouteModal = ({
             <View style={styles.speedContainer}>
               <View style={styles.speedLabelContainer}>
                 <Text style={styles.speedLabel}>
-                  Vitesse: {currentSpeed.toFixed(1)} mph
+                  Vitesse: {currentSpeed.toFixed(1)} m/s
                 </Text>
                 <Slider
                 key={`speed-slider-${transportMode}`}
@@ -360,6 +367,15 @@ const onTransportModeChange = (mode) => {
 };
 
 const styles = StyleSheet.create({
+  // Add the new style for Marcus image
+  marcusImage: {
+    position: 'absolute',
+    width: 500,
+    height: 500,
+    top: -230,
+    left: -185,
+    zIndex: 10,
+  },
   centeredView: {
     flex: 1,
     justifyContent: 'flex-end',
@@ -381,7 +397,8 @@ const styles = StyleSheet.create({
   modalTitle: {
     fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 20,
+    marginBottom: 40,
+    marginTop: 13,
     textAlign: 'center',
   },
   inputContainer: {

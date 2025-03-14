@@ -12,6 +12,15 @@ export async function fetchRouteStops(routeId) {
   }
   console.log('Fetching stops for route:', routeId);
   // If not cached, make the API call
+
+  // Check if the routeId needs transformation
+  // If it's "SEM:" followed by numbers only, convert it to "SEM:C" format
+  if (/^SEM:\d+$/.test(routeId)) {
+    const numPart = routeId.split(':')[1];
+    routeId = `SEM:C${numPart}`;
+    console.log('Transformed route ID to:', routeId);
+  }
+
   const url = `https://data.mobilites-m.fr/api/routers/default/index/routes/${routeId}/stops`;
   try {
     const response = await fetch(url);

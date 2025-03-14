@@ -38,12 +38,14 @@ const itineraire = async (from, to, mode = 'WALK', wheelchair = false, walkSpeed
     
     // Add walkSpeed if provided
     if (walkSpeed) {
-      url += `&walkSpeed=${walkSpeed}`;
+      console.log("Vitesse de marche :", walkSpeed);
+      url += `&walkSpeed=${walkSpeed/2.25}`;
     }
     
     // Add bikeSpeed if provided
     if (bikeSpeed) {
-      url += `&bikeSpeed=${bikeSpeed}`;
+      console.log("Vitesse de vélo :", bikeSpeed);
+      url += `&bikeSpeed=${bikeSpeed/2.25}`;
     }
     
     const response = await fetch(url);

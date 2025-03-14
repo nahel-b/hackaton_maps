@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Modal, View, Text, ScrollView, TouchableOpacity, Animated, PanResponder, Dimensions } from 'react-native';
+import { StyleSheet, Modal, View, Text, ScrollView, TouchableOpacity, Animated, PanResponder, Dimensions, ActivityIndicator } from 'react-native';
 import { Ionicons, FontAwesome5, MaterialCommunityIcons, FontAwesome } from '@expo/vector-icons';
 import { selectAppropriateItinerary, hasTransitSegments } from '../utils/routeUtils';
+import { itineraire } from '../assets/api';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 const FULL_MODAL_HEIGHT = SCREEN_HEIGHT * 0.8;
@@ -20,18 +21,40 @@ const RouteInfoModal = ({
 }) => {
   const [modalHeight] = useState(new Animated.Value(FULL_MODAL_HEIGHT));
   const [isMinimized, setIsMinimized] = useState(false);
+  const [multiModeRoutes, setMultiModeRoutes] = useState({});
+  const [loadingRoutes, setLoadingRoutes] = useState(false);
 
-  // If no route data, show nothing
-  if (!visible || !routeData || !routeData.plan || !routeData.plan.itineraries || routeData.plan.itineraries.length === 0) {
-    return null;
-  }
+  // All useEffects and other hooks must be here at the top level - no early returns before this
+  useEffect(() => {
+    if (visible && routeData && routeData.plan && routeData.plan.itineraries.length > 0) {
+      const firstItinerary = routeData.plan.itineraries[0];
+      if (firstItinerary && firstItinerary.legs && firstItinerary.legs.length > 0) {
+        const firstLeg = firstItinerary.legs[0];
+        const lastLeg = firstItinerary.legs[firstItinerary.legs.length - 1];
+        
+        if (firstLeg.from && lastLeg.to) {
+          const startCoords = {
+            lat: firstLeg.from.lat,
+            lon: firstLeg.from.lon
+          };
+          
+          const endCoords = {
+            lat: lastLeg.to.lat,
+            lon: lastLeg.to.lon
+          };
+          
+          fetchAllModeRoutes(startCoords, endCoords);
+        }
+      }
+    }
+  }, [visible, routeData]);
 
-  // Create pan responder for drag gestures
+  // Create pan responder and other non-hook logic
   const panResponder = PanResponder.create({
     onMoveShouldSetPanResponder: (evt, gestureState) => {
       // Only respond to vertical gestures near the top of the modal
-     // return gestureState.dy > 0 && evt.nativeEvent.locationY < 50;
-     false;
+      // return gestureState.dy > 0 && evt.nativeEvent.locationY < 50;
+      false;
     },
     onPanResponderMove: (e, gesture) => {
       if (gesture.dy > 0) { // Dragging down
@@ -49,7 +72,7 @@ const RouteInfoModal = ({
     }
   });
 
-  // Functions to control modal height
+  // Function declarations
   const minimizeModal = () => {
     Animated.timing(modalHeight, {
       toValue: MINIMIZED_MODAL_HEIGHT,
@@ -65,6 +88,48 @@ const RouteInfoModal = ({
       useNativeDriver: false
     }).start(() => setIsMinimized(false));
   };
+
+  const fetchAllModeRoutes = async (startCoords, endCoords) => {
+    setLoadingRoutes(true);
+    const modes = ['walking', 'bicycle', 'bus', 'car'];
+    const routes = {};
+    
+    try {
+      // Get API transport mode from UI mode
+      const modeMap = {
+        'walking': 'WALK',
+        'bicycle': 'BICYCLE', 
+        'bus': 'TRANSIT',
+        'car': 'CAR'
+      };
+      
+      // Fetch routes for each mode
+      for (const mode of modes) {
+        const apiMode = modeMap[mode] || 'WALK';
+        const result = await itineraire(startCoords, endCoords, apiMode);
+        if (result && result.plan && result.plan.itineraries && result.plan.itineraries.length > 0) {
+          const itinerary = selectAppropriateItinerary(result.plan.itineraries, apiMode);
+          if (itinerary) {
+            routes[mode] = itinerary;
+          }
+        }
+      }
+      
+      setMultiModeRoutes(routes);
+    } catch (error) {
+      console.error('Error fetching routes for all modes:', error);
+    } finally {
+      setLoadingRoutes(false);
+    }
+  };
+
+  // Any other functions...
+  // ...
+
+  // NOW you can do early returns - AFTER all hook calls
+  if (!visible || !routeData || !routeData.plan || !routeData.plan.itineraries || routeData.plan.itineraries.length === 0) {
+    return null;
+  }
 
   // Get API transport mode from UI mode
   const getApiTransportMode = (uiMode) => {
@@ -181,14 +246,17 @@ const RouteInfoModal = ({
   // Add a new section to display environmental impact
   const renderEnvironmentalImpact = () => {
     // Vérifiez que impactData est un tableau non vide
-    if (!impactData || !Array.isArray(impactData) || impactData.length === 0){console.log("e"); return null;}
+    if (!impactData || !Array.isArray(impactData) || impactData.length === 0) {
+      console.log("e"); 
+      return null;
+    }
     
-    // Les modes que nous voulons afficher
+    // Les modes que nous voulons afficher avec leurs durées
     const modesConfig = [
-      { id: 'walking', name: 'Marche', icon: 'walk', color: '#43A047' },
-      { id: 'bicycle', name: 'Vélo', icon: 'bicycle', color: '#1E88E5' },
-      { id: 'bus', name: 'Transport', icon: 'bus', color: '#7B1FA2' },
-      { id: 'car', name: 'Voiture', icon: 'car', color: '#E53935' }
+      { id: 'walking', name: 'Marche', icon: 'walk', color: '#43A047', apiMode: 'WALK' },
+      { id: 'bicycle', name: 'Vélo', icon: 'bicycle', color: '#1E88E5', apiMode: 'BICYCLE' },
+      { id: 'bus', name: 'Transport', icon: 'bus', color: '#7B1FA2', apiMode: 'TRANSIT' },
+      { id: 'car', name: 'Voiture', icon: 'car', color: '#E53935', apiMode: 'CAR' }
     ];
     
     // Fonction pour associer les IDs de l'API impactCO2 à nos modes UI
@@ -205,53 +273,57 @@ const RouteInfoModal = ({
       return mapping[apiId] || null;
     };
     
-    // Log pour le débogage
-    console.log('Impact data:', JSON.stringify(impactData));
-    
     return (
       <View style={styles.environmentalImpactContainer}>
-        {/* <Text style={styles.sectionTitle}>Comparer les modes de transport</Text>
-        <Text style={styles.impactDescription}>
-          Choisissez un mode de transport pour voir son itinéraire et son impact CO2:
-        </Text>
-         */}
-        <View style={styles.transportModesGrid}>
-          {modesConfig.map((mode) => {
-            // Trouver les données d'impact correspondant à ce mode
-            const modeImpactData = Array.isArray(impactData) ? impactData.find(item => 
-              item && item.id && mapApiIdToUiMode(item.id.toString()) === mode.id
-            ) : null;
-            
-            // Si on n'a pas de données pour ce mode, on l'affiche quand même
-            const co2Value = modeImpactData ? 
-              `${modeImpactData.value.toFixed(1)} kgCO₂e` : 
-              'Non disponible';
+        {loadingRoutes ? (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="small" color="#4285F4" />
+            <Text style={styles.loadingText}>Calcul des itinéraires...</Text>
+          </View>
+        ) : (
+          <View style={styles.transportModesGrid}>
+            {modesConfig.map((mode) => {
+              // Trouver les données d'impact correspondant à ce mode
+              const modeImpactData = Array.isArray(impactData) ? impactData.find(item => 
+                item && item.id && mapApiIdToUiMode(item.id.toString()) === mode.id
+              ) : null;
               
-            const isActive = transportMode === mode.id;
-            
-            return (
-              <TouchableOpacity
-                key={mode.id}
-                style={[
-                  styles.transportModeItem,
-                  isActive && { borderColor: mode.color, borderWidth: 2 }
-                ]}
-                onPress={() => onChangeTransportMode(mode.id)}
-              >
-                <View style={[styles.transportModeIcon, { backgroundColor: mode.color }]}>
-                  <Ionicons name={mode.icon} size={20} color="white" />
-                </View>
-                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'left', marginLeft: 10 }}>
-                <Text style={styles.transportModeName}>{mode.name}</Text>
-                <View style={styles.co2Container}>
-                  <FontAwesome name="leaf" size={12} color="#666" />
-                  <Text style={styles.co2Value}>{co2Value}</Text>
-                </View>
-                </View>
-              </TouchableOpacity>
-            );
-          })}
-        </View>
+              // Get duration from pre-fetched routes
+              const modeItinerary = multiModeRoutes[mode.id];
+              const duration = modeItinerary ? modeItinerary.duration : null;
+              const durationText = duration ? formatDuration(duration) : "Calcul...";
+              
+              // Si on n'a pas de données pour ce mode, on l'affiche quand même
+              const co2Value = modeImpactData ? 
+                `${modeImpactData.value.toFixed(1)} kgCO₂e` : 
+                'Non disponible';
+                
+              const isActive = transportMode === mode.id;
+              
+              return (
+                <TouchableOpacity
+                  key={mode.id}
+                  style={[
+                    styles.transportModeItem,
+                    isActive && { borderColor: mode.color, borderWidth: 2 }
+                  ]}
+                  onPress={() => onChangeTransportMode(mode.id)}
+                >
+                  <View style={[styles.transportModeIcon, { backgroundColor: mode.color }]}>
+                    <Ionicons name={mode.icon} size={20} color="white" />
+                  </View>
+                  <View style={{ flex: 1, justifyContent: 'center', alignItems: 'left', marginLeft: 10 }}>
+                    <Text style={styles.transportModeName}>{durationText}</Text>
+                    <View style={styles.co2Container}>
+                      <FontAwesome name="leaf" size={12} color="#666" />
+                      <Text style={styles.co2Value}>{co2Value}</Text>
+                    </View>
+                  </View>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+        )}
       </View>
     );
   };
@@ -792,6 +864,15 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginLeft: 4,
     color: '#555',
+  },
+  loadingContainer: {
+    alignItems: 'center',
+    justifyContent: 'center',
+    padding: 20,
+  },
+  loadingText: {
+    marginTop: 10,
+    color: '#666',
   },
 });
 

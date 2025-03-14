@@ -1,6 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Alert } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Alert, Image, SafeAreaView } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { convertionLieu, itineraire, getAllTransportsImpactCO2 } from './assets/api';
 import { getApiTransportMode, parseRouteGeometry, extractTransitPoints, selectAppropriateItinerary } from './utils/routeUtils';
@@ -11,6 +11,9 @@ import { getStopCodeByName } from './utils/stopUtils';
 import * as Location from 'expo-location';
 
 export default function App() {
+  // Add state to control welcome screen visibility
+  const [showWelcomeScreen, setShowWelcomeScreen] = useState(true);
+  
   const [modalVisible, setModalVisible] = useState(true);
   const [infoModalVisible, setInfoModalVisible] = useState(false);
   const [isInfoModalMinimized, setIsInfoModalMinimized] = useState(false);
@@ -36,6 +39,42 @@ export default function App() {
   const [safetyModeForWomen, setSafetyModeForWomen] = useState(false);
   const [transportImpactData, setTransportImpactData] = useState(null);
 
+  // Function to handle starting the app
+  const startApp = () => {
+    setShowWelcomeScreen(false);
+  };
+
+  // Welcome Screen Component
+  const WelcomeScreen = () => {
+    return (
+      <SafeAreaView style={styles.welcomeContainer}>
+        <View style={styles.welcomeContent}>
+          <Image 
+            source={require('./assets/image/marcus-coucou.png')} 
+            style={styles.marcusImage}
+            resizeMode="contain"
+          />
+          
+          <Text style={styles.welcomeTitle}>Bonjour, je suis Marcus!</Text>
+          
+          <Text style={styles.welcomeText}>
+            Je suis votre assistant de navigation à Grenoble.
+            Je vous aide à trouver le meilleur itinéraire en fonction de vos préférences,
+            tout en vous informant sur l'impact environnemental de votre trajet.
+          </Text>
+          
+          <TouchableOpacity 
+            style={styles.startButton}
+            onPress={startApp}
+          >
+            <Text style={styles.startButtonText}>Commencer</Text>
+          </TouchableOpacity>
+        </View>
+      </SafeAreaView>
+    );
+  };
+
+  // Existing app logic remains unchanged
   // Format duration helper function
   const formatDuration = (seconds) => {
     const minutes = Math.floor(seconds / 60);
@@ -354,105 +393,166 @@ export default function App() {
     }
   };
 
+  // Main render function with conditional rendering
   return (
     <View style={styles.container}>
-      {/* Carte en arrière-plan */}
-      <RouteMap
-        region={region}
-        routeCoordinates={routeCoordinates}
-        startCoords={startCoords}
-        endCoords={endCoords}
-        transitPoints={transitPoints}
-        stopTimesData={stopTimesData}
-        onRegionChangeComplete={setRegion}
-      />
-      
-      {/* Modal de planification d'itinéraire */}
-      <RouteModal
-        visible={modalVisible}
-        startLocation={startLocation}
-        endLocation={endLocation}
-        transportMode={transportMode}
-        wheelchairMode={wheelchairMode}
-        walkSpeed={walkSpeed}
-        bikeSpeed={bikeSpeed}
-        loading={loading}
-        onClose={() => setModalVisible(false)}
-        onSearch={searchRoute}
-        onStartLocationChange={setStartLocation}
-        onEndLocationChange={setEndLocation}
-        onTransportModeChange={setTransportMode}
-        onWheelchairModeChange={setWheelchairMode}
-        onWalkSpeedChange={handleWalkSpeedChange}
-        onBikeSpeedChange={handleBikeSpeedChange}
-        safetyModeForWomen={safetyModeForWomen}
-        onSafetyModeChange={setSafetyModeForWomen}
-      />
+      {showWelcomeScreen ? (
+        <WelcomeScreen />
+      ) : (
+        <>
+          {/* Carte en arrière-plan */}
+          <RouteMap
+            region={region}
+            routeCoordinates={routeCoordinates}
+            startCoords={startCoords}
+            endCoords={endCoords}
+            transitPoints={transitPoints}
+            stopTimesData={stopTimesData}
+            onRegionChangeComplete={setRegion}
+          />
+          
+          {/* Modal de planification d'itinéraire */}
+          <RouteModal
+            visible={modalVisible}
+            startLocation={startLocation}
+            endLocation={endLocation}
+            transportMode={transportMode}
+            wheelchairMode={wheelchairMode}
+            walkSpeed={walkSpeed}
+            bikeSpeed={bikeSpeed}
+            loading={loading}
+            onClose={() => setModalVisible(false)}
+            onSearch={searchRoute}
+            onStartLocationChange={setStartLocation}
+            onEndLocationChange={setEndLocation}
+            onTransportModeChange={setTransportMode}
+            onWheelchairModeChange={setWheelchairMode}
+            onWalkSpeedChange={handleWalkSpeedChange}
+            onBikeSpeedChange={handleBikeSpeedChange}
+            safetyModeForWomen={safetyModeForWomen}
+            onSafetyModeChange={setSafetyModeForWomen}
+          />
 
-      {/* Modal d'informations d'itinéraire */}
-      {routeData && (
-        <RouteInfoModal
-          visible={infoModalVisible}
-          routeData={routeData}
-          transportMode={transportMode}
-          stopTimesData={stopTimesData}
-          impactData={transportImpactData}
-          onChangeTransportMode={changeTransportMode}
-          onClose={() => {}} // No-op since we don't actually close it
-          onReset={resetRoute}
-          onMinimize={minimizeInfoModal}
-        />
+          {/* Modal d'informations d'itinéraire */}
+          {routeData && (
+            <RouteInfoModal
+              visible={infoModalVisible}
+              routeData={routeData}
+              transportMode={transportMode}
+              stopTimesData={stopTimesData}
+              impactData={transportImpactData}
+              onChangeTransportMode={changeTransportMode}
+              onClose={() => {}} // No-op since we don't actually close it
+              onReset={resetRoute}
+              onMinimize={minimizeInfoModal}
+            />
+          )}
+          
+          {/* Floating summary button when route info is minimized */}
+          {isInfoModalMinimized && routeData && (
+            <TouchableOpacity
+              style={styles.routeSummaryButton}
+              onPress={maximizeInfoModal}
+            >
+              <View style={styles.summaryIconContainer}>
+                <Ionicons name={getTransportIcon(transportMode)} size={24} color="#4285F4" />
+              </View>
+              <View style={styles.summaryTextContainer}>
+                {(() => {
+                  const itinerary = getSelectedItinerary();
+                  return itinerary ? (
+                    <>
+                      <Text style={styles.summaryDuration}>
+                        {formatDuration(itinerary.duration)}
+                      </Text>
+                      <Text style={styles.summaryDistance}>
+                        {formatDistance(itinerary.walkDistance)}
+                      </Text>
+                    </>
+                  ) : (
+                    <Text style={styles.summaryText}>Voir détails</Text>
+                  );
+                })()}
+              </View>
+              <Ionicons name="chevron-up" size={24} color="#4285F4" />
+            </TouchableOpacity>
+          )}
+          
+          {/* Floating button to open route planning modal */}
+          {!modalVisible && !routeData && !infoModalVisible && !isInfoModalMinimized && (
+            <TouchableOpacity
+              style={styles.openModalButton}
+              onPress={() => setModalVisible(true)}
+            >
+              <Text style={styles.openModalText}>Planifier un itinéraire</Text>
+            </TouchableOpacity>
+          )}
+          
+          <StatusBar style="auto" />
+        </>
       )}
-      
-      {/* Floating summary button when route info is minimized */}
-      {isInfoModalMinimized && routeData && (
-        <TouchableOpacity
-          style={styles.routeSummaryButton}
-          onPress={maximizeInfoModal}
-        >
-          <View style={styles.summaryIconContainer}>
-            <Ionicons name={getTransportIcon(transportMode)} size={24} color="#4285F4" />
-          </View>
-          <View style={styles.summaryTextContainer}>
-            {(() => {
-              const itinerary = getSelectedItinerary();
-              return itinerary ? (
-                <>
-                  <Text style={styles.summaryDuration}>
-                    {formatDuration(itinerary.duration)}
-                  </Text>
-                  <Text style={styles.summaryDistance}>
-                    {formatDistance(itinerary.walkDistance)}
-                  </Text>
-                </>
-              ) : (
-                <Text style={styles.summaryText}>Voir détails</Text>
-              );
-            })()}
-          </View>
-          <Ionicons name="chevron-up" size={24} color="#4285F4" />
-        </TouchableOpacity>
-      )}
-      
-      {/* Floating button to open route planning modal */}
-      {!modalVisible && !routeData && !infoModalVisible && !isInfoModalMinimized && (
-        <TouchableOpacity
-          style={styles.openModalButton}
-          onPress={() => setModalVisible(true)}
-        >
-          <Text style={styles.openModalText}>Planifier un itinéraire</Text>
-        </TouchableOpacity>
-      )}
-      
-      <StatusBar style="auto" />
     </View>
   );
 }
 
+// Add new welcome screen styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,
   },
+  welcomeContainer: {
+    flex: 1,
+    backgroundColor: '#ffffff',
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  welcomeContent: {
+    width: '100%',
+    maxWidth: 400,
+    alignItems: 'center',
+  },
+  marcusImage: {
+    width: 500,
+    height: 400,
+    marginBottom: 0,
+  },
+  welcomeTitle: {
+    fontSize: 28,
+    fontWeight: '900',
+    marginBottom: 15,
+    color: '#4285F4',
+    textAlign: 'center',
+  },
+  welcomeText: {
+    fontSize: 13,
+    textAlign: 'center',
+    fontWeight: '500',
+    marginBottom: 40,
+    paddingHorizontal: 30,
+    lineHeight: 22,
+    color: '#888',
+  },
+  startButton: {
+    backgroundColor: '#4285F4',
+    paddingHorizontal: 50,
+    paddingVertical: 15,
+    borderRadius: 30,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  startButtonText: {
+    color: 'white',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  // Keep all your existing styles below
   openModalButton: {
     position: 'absolute',
     bottom: 20,
