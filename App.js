@@ -10,6 +10,7 @@ import RouteInfoModal from './components/RouteInfoModal';
 import { getStopCodeByName } from './utils/stopUtils';
 import * as Location from 'expo-location';
 import { AnimatedImage } from 'expo-image';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 
 export default function App() {
@@ -446,6 +447,7 @@ export default function App() {
 
   // Main render function with conditional rendering
   return (
+    <SafeAreaProvider>
     <View style={styles.container}>
       {showWelcomeScreen ? (
         <WelcomeScreen />
@@ -550,6 +552,7 @@ export default function App() {
         </>
       )}
   </View>
+  </SafeAreaProvider>
 );
 }
 
