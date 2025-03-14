@@ -367,7 +367,7 @@ const renderMarcusEcoSuggestion = () => {
     return (
       <View style={styles.marcusSuggestionContainer}>
         <Image 
-          source={require('../assets/image/marcus-fache.png')} 
+          source={require('../assets/image/marcus-fache.gif')} 
           style={styles.marcusSuggestionImage} 
           resizeMode="contain"
         />
@@ -416,7 +416,7 @@ const renderMarcusEcoSuggestion = () => {
     return (
       <View style={styles.marcusSuggestionContainer}>
         <Image 
-          source={require('../assets/image/marcus-fache.png')} 
+          source={require('../assets/image/marcus-fache.gif')} 
           style={styles.marcusSuggestionImage} 
           resizeMode="contain"
         />
@@ -695,7 +695,7 @@ const renderMarcusEcoSuggestion = () => {
                                    <Text style={{fontSize : 13,color : "white",fontWeight : "bold"}}>{leg.routeShortName}</Text>
                                    </View>
                                    {leg.headsign && (
-                                   <Text style={styles.headsignText}>→ {leg.headsign}</Text>
+                                   <Text style={{width : "90%"}}>→ {leg.headsign}</Text>
                                    )}
                                  </View>
                                  ) : leg.headsign ? (
@@ -1024,8 +1024,9 @@ const styles = StyleSheet.create({
   },
   marcusSuggestionImage: {
     width: 80,
-    height: 90,
+    height: 200,
     marginRight: 5,
+    resizeMode: "cover",
   },
   marcusBubble: {
     flex: 1,
