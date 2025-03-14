@@ -333,7 +333,7 @@ const RouteInfoModal = ({
 const renderMarcusEcoSuggestion = () => {
   // Only show suggestions if current mode is car
   if (transportMode !== 'car') return null;
-  console.log("a");
+  
   // Get the durations for different modes
   const carItinerary = multiModeRoutes['car'];
   const walkItinerary = multiModeRoutes['walking'];
@@ -342,7 +342,6 @@ const renderMarcusEcoSuggestion = () => {
   if (!carItinerary || !walkItinerary || !bikeItinerary) return null;
   
   // Convert to minutes for easier comparison
-  
   const carDurationMins = Math.round(carItinerary.duration / 60);
   const walkDurationMins = Math.round(walkItinerary.duration / 60);
   const bikeDurationMins = Math.round(bikeItinerary.duration / 60);
@@ -373,19 +372,47 @@ const renderMarcusEcoSuggestion = () => {
           resizeMode="contain"
         />
         <View style={styles.marcusBubble}>
-          <Text style={styles.marcusSuggestionTitle}>Un conseil de Marcus</Text>
+          <View style={styles.marcusTitleContainer}>
+            <Ionicons name="bulb" size={18} color="#FFA000" />
+            <Text style={styles.marcusSuggestionTitle}>Un conseil de Marcus</Text>
+          </View>
+          
           <Text style={styles.marcusSuggestionText}>
-            Ce trajet est assez court pour être fait à pied ! {'\n'}
-            Économisez {walkingSavings} kgCO₂e en marchant ! {'\n'}
-            (durée à pied : {walkDurationMins} min)
+            Ce trajet est assez court pour être fait à pied !
           </Text>
+          
+          <View style={styles.marcusInfoRow}>
+            <View style={styles.marcusIconContainer}>
+              <Ionicons name="leaf" size={16} color="#4CAF50" />
+            </View>
+            <Text style={styles.marcusHighlightText}>
+              Économisez <Text style={{fontWeight: 'bold', color: '#4CAF50'}}>{walkingSavings} kgCO₂e</Text> en marchant
+            </Text>
+          </View>
+          
+          <View style={styles.marcusInfoRow}>
+            <View style={styles.marcusIconContainer}>
+              <Ionicons name="time" size={16} color="#FF5722" />
+            </View>
+            <Text style={styles.marcusHighlightText}>
+              Durée à pied : <Text style={{fontWeight: 'bold'}}>{walkDurationMins} min</Text>
+            </Text>
+          </View>
+          
+          <TouchableOpacity 
+            style={styles.marcusActionButton} 
+            onPress={() => onChangeTransportMode('walking')}
+          >
+            <Text style={styles.marcusActionText}>Voir l'itinéraire à pied</Text>
+            <Ionicons name="arrow-forward" size={16} color="white" />
+          </TouchableOpacity>
         </View>
       </View>
     );
   }
   
   // Bike trip that's not much longer than car (at most 10 mins more)
-  if (bikeDurationMins - carDurationMins <= 10) {
+  if (bikeDurationMins - carDurationMins <= 30) {
     return (
       <View style={styles.marcusSuggestionContainer}>
         <Image 
@@ -394,11 +421,40 @@ const renderMarcusEcoSuggestion = () => {
           resizeMode="contain"
         />
         <View style={styles.marcusBubble}>
-          <Text style={styles.marcusSuggestionTitle}>Un conseil de Marcus</Text>
+          <View style={styles.marcusTitleContainer}>
+            <Ionicons name="bulb" size={18} color="#FFA000" />
+            <Text style={styles.marcusSuggestionTitle}>Un conseil de Marcus</Text>
+          </View>
+          
           <Text style={styles.marcusSuggestionText}>
-            Pourquoi ne pas prendre le vélo ? {'\n'}
-            Seulement {bikeDurationMins - carDurationMins} min de plus et vous économisez {bikeSavings} kgCO₂e !
+            Pourquoi ne pas prendre le vélo ?
           </Text>
+          
+          <View style={styles.marcusInfoRow}>
+            <View style={styles.marcusIconContainer}>
+              <Ionicons name="time" size={16} color="#FF5722" />
+            </View>
+            <Text style={styles.marcusHighlightText}>
+              Seulement <Text style={{fontWeight: 'bold'}}>{bikeDurationMins - carDurationMins} min</Text> de plus
+            </Text>
+          </View>
+          
+          <View style={styles.marcusInfoRow}>
+            <View style={styles.marcusIconContainer}>
+              <Ionicons name="leaf" size={16} color="#4CAF50" />
+            </View>
+            <Text style={styles.marcusHighlightText}>
+              Économisez <Text style={{fontWeight: 'bold', color: '#4CAF50'}}>{bikeSavings} kgCO₂e</Text> de CO₂
+            </Text>
+          </View>
+          
+          <TouchableOpacity 
+            style={styles.marcusActionButton} 
+            onPress={() => onChangeTransportMode('bicycle')}
+          >
+            <Text style={styles.marcusActionText}>Voir l'itinéraire à vélo</Text>
+            <Ionicons name="arrow-forward" size={16} color="white" />
+          </TouchableOpacity>
         </View>
       </View>
     );
@@ -958,35 +1014,85 @@ const styles = StyleSheet.create({
   },
   marcusSuggestionContainer: {
     flexDirection: 'row',
-    backgroundColor: '#e3f2fd',
-    borderRadius: 10,
-    padding: 10,
-    marginVertical: 10,
+    backgroundColor: 'rgba(230, 246, 255, 0.8)',
+    borderRadius: 16,
+    padding: 5,
+    marginVertical: 0,
     alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#BEE3F8',
   },
   marcusSuggestionImage: {
-    width: 100,
-    height: 100,
-    marginRight: 10,
+    width: 80,
+    height: 90,
+    marginRight: 5,
   },
   marcusBubble: {
     flex: 1,
     backgroundColor: 'white',
-    borderRadius: 8,
+    borderRadius: 12,
     padding: 10,
     borderWidth: 1,
-    borderColor: '#ccc',
+    borderColor: '#E2E8F0',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+  },
+  marcusTitleContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
   },
   marcusSuggestionTitle: {
     fontWeight: 'bold',
-    fontSize: 14,
-    color: '#4285F4',
-    marginBottom: 5,
+    fontSize: 15,
+    color: '#2B6CB0',
+    marginLeft: 6,
   },
   marcusSuggestionText: {
+    fontSize: 14,
+    color: '#2D3748',
+    marginBottom: 10,
+  },
+  marcusInfoRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  marcusIconContainer: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    backgroundColor: '#F7FAFC',
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 8,
+    borderWidth: 1,
+    borderColor: '#E2E8F0',
+  },
+  marcusHighlightText: {
     fontSize: 13,
-    color: '#333',
-  }
+    width : "90%",
+    color: '#4A5568',
+  },
+  marcusActionButton: {
+    backgroundColor: '#4285F4',
+    borderRadius: 8,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    marginTop: 5,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  marcusActionText: {
+    color: 'white',
+    fontWeight: 'bold',
+    fontSize: 13,
+    marginRight: 5,
+  },
 });
 
 export default RouteInfoModal;

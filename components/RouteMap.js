@@ -64,7 +64,10 @@ const RouteMap = ({
       style={styles.map}
       region={region}
       onRegionChangeComplete={onRegionChangeComplete}
-
+      mapType='mutedStandard'
+      showsCompass={true}
+      showsBuildings={true}
+      showsTraffic={true}
       showsUserLocation={true}
     >
       {routeCoordinates.length > 0 && (

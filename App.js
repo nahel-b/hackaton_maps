@@ -9,6 +9,8 @@ import RouteModal from './components/RouteModal';
 import RouteInfoModal from './components/RouteInfoModal';
 import { getStopCodeByName } from './utils/stopUtils';
 import * as Location from 'expo-location';
+import { AnimatedImage } from 'expo-image';
+
 
 export default function App() {
   // Add state to control welcome screen visibility
@@ -50,9 +52,10 @@ export default function App() {
       <SafeAreaView style={styles.welcomeContainer}>
         <View style={styles.welcomeContent}>
           <Image 
-            source={require('./assets/image/marcus-coucou.png')} 
+            source={require('./assets/image/marcus-coucou.gif')} 
             style={styles.marcusImage}
             resizeMode="contain"
+            
           />
           
           <Text style={styles.welcomeTitle}>Bonjour, je suis Marcus!</Text>
@@ -563,9 +566,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   marcusImage: {
-    width: 500,
-    height: 400,
-    marginBottom: 0,
+    width: 900,
+    height: 600,
+    marginBottom: -100,
   },
   welcomeTitle: {
     fontSize: 28,
