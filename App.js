@@ -112,6 +112,7 @@ export default function App() {
       Alert.alert('Champs requis', 'Veuillez entrer un lieu de départ et une destination');
       setStartLocation(startLocation || 'Ile Verte, Grenoble');
       setEndLocation(endLocation || 'Rue Ampère, Grenoble');
+      return;
     }
 
     setLoading(true);

@@ -3,6 +3,7 @@ import { StyleSheet, View, Text, ActivityIndicator } from 'react-native';
 import MapView, { Polyline, Marker, Callout } from 'react-native-maps';
 import { Ionicons, FontAwesome5, MaterialIcons } from '@expo/vector-icons';
 import { getStopCodeByName } from '../utils/stopUtils';
+import * as Location from 'expo-location';
 
 const RouteMap = ({ 
   region, 
@@ -13,6 +14,22 @@ const RouteMap = ({
   stopTimesData = {}, 
   onRegionChangeComplete 
 }) => {
+
+
+  useEffect(() => {
+    const getLocationPermission = async () => {
+      try {
+        let { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          console.log('Permission to access location was denied');
+        }
+      } catch (error) {
+        console.error('Error requesting location permission:', error);
+      }
+    };
+    
+    getLocationPermission();
+  }, []);
 
   const getTransitIcon = (mode) => {
     console.log('Mode:', mode);
@@ -47,6 +64,8 @@ const RouteMap = ({
       style={styles.map}
       region={region}
       onRegionChangeComplete={onRegionChangeComplete}
+
+      showsUserLocation={true}
     >
       {routeCoordinates.length > 0 && (
         <Polyline

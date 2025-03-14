@@ -20,7 +20,8 @@ const RouteInfoModal = ({ visible, routeData, onClose, transportMode, stopTimesD
   const panResponder = PanResponder.create({
     onMoveShouldSetPanResponder: (evt, gestureState) => {
       // Only respond to vertical gestures near the top of the modal
-      return gestureState.dy > 0 && evt.nativeEvent.locationY < 50;
+     // return gestureState.dy > 0 && evt.nativeEvent.locationY < 50;
+     false;
     },
     onPanResponderMove: (e, gesture) => {
       if (gesture.dy > 0) { // Dragging down
@@ -198,10 +199,10 @@ const RouteInfoModal = ({ visible, routeData, onClose, transportMode, stopTimesD
           {...(isMinimized ? {} : panResponder.panHandlers)}
         >
           {/* Drag handle */}
-          <View style={[styles.dragHandle,]}>
+          {/* <View style={[styles.dragHandle,]}>
             <View style={styles.dragHandleBar} />
           </View>
-          
+           */}
           {isMinimized ? (
             // Minimized view
             <TouchableOpacity 
@@ -294,22 +295,34 @@ const RouteInfoModal = ({ visible, routeData, onClose, transportMode, stopTimesD
                       <Text style={styles.sectionTitle}>Prochains départs:</Text>
                       {transitStops.map((stop, stopIndex) => {
                         console.log(JSON.stringify(stopTimesData));
-                        const stopData = Object.values(stopTimesData).find(data => {
-                          // Make sure data exists and has at least one entry
-                          if (!data || !data.length || !data[0].pattern) return false;
+                        const stopData = stopTimesData[stopIndex] ? stopTimesData[stopIndex].find(data => {
+                          // Basic validation
+                          if (!data || !data.pattern) return false;
                           
-                          const pattern = data[0].pattern;
-                          const patternDesc = pattern.shortDesc || '';
-                          const patternId = pattern.id || '';
+                          const pattern = data.pattern;
                           
-                          // More flexible matching logic:
-                          // 1. Check pattern ID (most reliable)
-                          // 2. Check if shortDesc contains the route code
-                          return patternId.includes(`:${stop.route}:`) || 
-                                 patternDesc.includes(stop.route) ||
-                                 // For cases where route might be written differently
-                                 (pattern.desc && pattern.desc.includes(stop.route));
-                        });
+                          // For bus routes
+                          if (stop.mode === 'BUS') {
+                            // Extract numbers from route
+                            const routeNumber = stop.route;
+                            
+                            // Extract route number from pattern ID
+                            const patternMatch = pattern.id.match(/SEM:(\d+):/);
+                            const patternNumber = patternMatch ? patternMatch[1] : '';
+                            
+                            // Check for direct match
+                            return patternNumber === routeNumber;
+                          } 
+                          // For trams
+                          else {
+                            // Direct match for tram letters
+                            return pattern.id.includes(`:${stop.route}:`);
+                          }
+                        }) : null;
+
+                        // If no matching found, try a more generic approach
+                        const fallbackData = !stopData && stopTimesData[stopIndex] && stopTimesData[stopIndex][0];
+                        const dataToUse = stopData || fallbackData;
                         
                         return (
                           <View key={stopIndex} style={styles.transitStopContainer}>
@@ -322,10 +335,10 @@ const RouteInfoModal = ({ visible, routeData, onClose, transportMode, stopTimesD
                                 <Text style={styles.transitHeadsign}>Direction: {stop.headsign}</Text>
                               )}
                               <View style={styles.transitTimesWrapper}>
-                                {!stopData ? (
+                                {!dataToUse || !dataToUse.times ? (
                                   <Text style={styles.noTimesText}>Horaires non disponibles</Text>
                                 ) : (
-                                  stopData[0].times && stopData[0].times.slice(0, 3).map((time, timeIndex) => (
+                                  dataToUse.times.slice(0, 3).map((time, timeIndex) => (
                                     <View key={timeIndex} style={styles.transitTimeItem}>
                                       <Text style={styles.transitTime}>
                                         {formatStopTime(time.serviceDay, time.realtimeDeparture)}
