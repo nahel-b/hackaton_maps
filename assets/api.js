@@ -23,7 +23,26 @@ const convertionLieu = async (searchQuery) => {
   }
 };
 
-const itineraire = async (from, to, mode = 'WALK', wheelchair = false, walkSpeed = null, bikeSpeed = null) => {
+
+import jsonData from './routes.json';
+
+
+const getWayIds = () => {
+  // Parse the routes data from the imported JSON
+  const parseOverpassData = (data) => {
+    return data
+      .filter(el => el.type === "way" && el.tags && el.tags.name)
+      .map(way => {
+        // Remove spaces from route names to match required format
+        const routeName = way.tags.name.replace(/\s+/g, '');
+        return `Grenoble_${routeName}_${way.id}`;
+      });
+  };
+  const preferredRoutes = parseOverpassData(jsonData);
+  return preferredRoutes.join(',');
+};
+
+const itineraire = async (from, to, mode = 'WALK', wheelchair = false, walkSpeed = null, bikeSpeed = null, safetyMode = false) => {
   try {
     const fromCoords = `${from.lat},${from.lon}`;
     const toCoords = `${to.lat},${to.lon}`;
@@ -48,6 +67,26 @@ const itineraire = async (from, to, mode = 'WALK', wheelchair = false, walkSpeed
       url += `&bikeSpeed=${bikeSpeed/2.25}`;
     }
     
+    // Get preferred ways for safety mode
+    // Add safety mode parameters
+    // if (safetyMode) {
+    //   const preferredWays = getWayIds();
+    //   console.log("Preferred ways:", preferredWays);
+
+    //   console.log("Mode sécurité activé");
+      
+    //   // Add preferred routes from the routes.json file
+    //   url += `&bannedRoutes=${preferredWays}`;
+      
+    
+    // }
+
+    if (safetyMode) {
+      console.log("Mode sécurité activé");
+      url += `&optimize=SAFE`;
+    }
+
+    //console.log("URL de l'itinéraire :", url);
     const response = await fetch(url);
     
     if (!response.ok) {
@@ -137,7 +176,7 @@ const getAllTransportsImpactCO2 = async (km) => {
     }
     
     const responseData = await response.json();
-    console.log("Données d'impact CO2 pour tous les transports:", responseData);
+    //console.log("Données d'impact CO2 pour tous les transports:", responseData);
     
     // Retourner directement le tableau data plutôt que l'objet entier
     return responseData.data || [];

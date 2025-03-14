@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Modal, View, Text, ScrollView, TouchableOpacity, Animated, PanResponder, Dimensions, ActivityIndicator } from 'react-native';
+import { StyleSheet, Modal,Image, View, Text, ScrollView, TouchableOpacity, Animated, PanResponder, Dimensions, ActivityIndicator } from 'react-native';
 import { Ionicons, FontAwesome5, MaterialCommunityIcons, FontAwesome } from '@expo/vector-icons';
 import { selectAppropriateItinerary, hasTransitSegments } from '../utils/routeUtils';
 import { itineraire } from '../assets/api';
@@ -328,6 +328,85 @@ const RouteInfoModal = ({
     );
   };
 
+  // Add this function after the renderEnvironmentalImpact function
+
+const renderMarcusEcoSuggestion = () => {
+  // Only show suggestions if current mode is car
+  if (transportMode !== 'car') return null;
+  console.log("a");
+  // Get the durations for different modes
+  const carItinerary = multiModeRoutes['car'];
+  const walkItinerary = multiModeRoutes['walking'];
+  const bikeItinerary = multiModeRoutes['bicycle'];
+  
+  if (!carItinerary || !walkItinerary || !bikeItinerary) return null;
+  
+  // Convert to minutes for easier comparison
+  
+  const carDurationMins = Math.round(carItinerary.duration / 60);
+  const walkDurationMins = Math.round(walkItinerary.duration / 60);
+  const bikeDurationMins = Math.round(bikeItinerary.duration / 60);
+  
+  // Find CO2 impact data for each mode
+  const findImpactData = (mode) => {
+    const modeMapping = { 'car': '4', 'walking': '30', 'bicycle': '7' };
+    return impactData?.find(item => item?.id?.toString() === modeMapping[mode]);
+  };
+  
+  const carImpact = findImpactData('car');
+  const walkImpact = findImpactData('walking');
+  const bikeImpact = findImpactData('bicycle');
+  
+  // Calculate savings
+  const walkingSavings = carImpact && walkImpact ? 
+    (carImpact.value - walkImpact.value).toFixed(1) : 0;
+  const bikeSavings = carImpact && bikeImpact ? 
+    (carImpact.value - bikeImpact.value).toFixed(1) : 0;
+  
+  // Short car trip that could be walked (under 15 mins)
+  if (walkDurationMins < 15) {
+    return (
+      <View style={styles.marcusSuggestionContainer}>
+        <Image 
+          source={require('../assets/image/marcus-fache.png')} 
+          style={styles.marcusSuggestionImage} 
+          resizeMode="contain"
+        />
+        <View style={styles.marcusBubble}>
+          <Text style={styles.marcusSuggestionTitle}>Un conseil de Marcus</Text>
+          <Text style={styles.marcusSuggestionText}>
+            Ce trajet est assez court pour être fait à pied ! {'\n'}
+            Économisez {walkingSavings} kgCO₂e en marchant ! {'\n'}
+            (durée à pied : {walkDurationMins} min)
+          </Text>
+        </View>
+      </View>
+    );
+  }
+  
+  // Bike trip that's not much longer than car (at most 10 mins more)
+  if (bikeDurationMins - carDurationMins <= 10) {
+    return (
+      <View style={styles.marcusSuggestionContainer}>
+        <Image 
+          source={require('../assets/image/marcus-fache.png')} 
+          style={styles.marcusSuggestionImage} 
+          resizeMode="contain"
+        />
+        <View style={styles.marcusBubble}>
+          <Text style={styles.marcusSuggestionTitle}>Un conseil de Marcus</Text>
+          <Text style={styles.marcusSuggestionText}>
+            Pourquoi ne pas prendre le vélo ? {'\n'}
+            Seulement {bikeDurationMins - carDurationMins} min de plus et vous économisez {bikeSavings} kgCO₂e !
+          </Text>
+        </View>
+      </View>
+    );
+  }
+  
+  return null;
+};
+
   return (
     <Modal
       animationType="slide"
@@ -414,6 +493,9 @@ const RouteInfoModal = ({
                 >
                   {/* Section impact environnemental */}
                   {renderEnvironmentalImpact()}
+
+                  {/* Marcus eco-friendly suggestions */}
+                  {renderMarcusEcoSuggestion()}
 
                   {/* Informations détaillées */}
                   {/* <View style={styles.infoRow}>
@@ -874,6 +956,37 @@ const styles = StyleSheet.create({
     marginTop: 10,
     color: '#666',
   },
+  marcusSuggestionContainer: {
+    flexDirection: 'row',
+    backgroundColor: '#e3f2fd',
+    borderRadius: 10,
+    padding: 10,
+    marginVertical: 10,
+    alignItems: 'center',
+  },
+  marcusSuggestionImage: {
+    width: 100,
+    height: 100,
+    marginRight: 10,
+  },
+  marcusBubble: {
+    flex: 1,
+    backgroundColor: 'white',
+    borderRadius: 8,
+    padding: 10,
+    borderWidth: 1,
+    borderColor: '#ccc',
+  },
+  marcusSuggestionTitle: {
+    fontWeight: 'bold',
+    fontSize: 14,
+    color: '#4285F4',
+    marginBottom: 5,
+  },
+  marcusSuggestionText: {
+    fontSize: 13,
+    color: '#333',
+  }
 });
 
 export default RouteInfoModal;

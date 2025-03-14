@@ -163,6 +163,7 @@ const RouteModal = ({
             source={require('../assets/image/marcus-bas.png')} 
             style={styles.marcusImage}
             resizeMode="contain"
+            pointerEvents="none"
           />
           
           <Text style={styles.modalTitle}> Planifie l'itinéraire</Text>
@@ -314,7 +315,7 @@ const RouteModal = ({
           </View>
           
           {/* Option pour mode sécurité femmes */}
-          <View style={styles.accessibilityContainer}>
+          {/* <View style={styles.accessibilityContainer}>
             <View style={styles.switchContainer}>
               <Ionicons name="shield-checkmark" size={24} color="#E91E63" />
               <Text style={styles.switchLabel}>Mode sécurité femmes</Text>
@@ -328,7 +329,7 @@ const RouteModal = ({
             <Text style={styles.accessibilityHint}>
               Privilégier les itinéraires sécurisés et éviter certains quartiers la nuit
             </Text>
-          </View>
+          </View> */}
           
           {/* Bouton de recherche */}
           <TouchableOpacity 

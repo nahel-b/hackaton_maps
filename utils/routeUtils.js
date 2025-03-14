@@ -12,7 +12,7 @@ export const getApiTransportMode = (uiMode, wheelchair = false) => {
   
   // Obtenir le mode de transport de base
   const mode = modeMap[uiMode] || 'WALK';
-  console.log('Mode de transport:', mode);
+  //console.log('Mode de transport:', mode);
   
   // Si l'option wheelchair est activée, ajouter le paramètre
 //   if (wheelchair) {

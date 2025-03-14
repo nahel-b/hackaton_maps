@@ -236,7 +236,8 @@ export default function App() {
         apiTransportMode, 
         wheelchairMode,
         transportMode === 'walking' ? walkSpeed : null,
-        transportMode === 'bicycle' ? bikeSpeed : null
+        transportMode === 'bicycle' ? bikeSpeed : null,
+        safetyModeForWomen // Pass the safety mode parameter
       );
       
       if (routeData) {
@@ -365,7 +366,8 @@ export default function App() {
         apiTransportMode, 
         wheelchairMode,
         newMode === 'walking' ? walkSpeed : null,
-        newMode === 'bicycle' ? bikeSpeed : null
+        newMode === 'bicycle' ? bikeSpeed : null,
+        safetyModeForWomen // Pass the safety mode parameter
       );
       
       if (newRouteData) {
