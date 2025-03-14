@@ -210,11 +210,11 @@ const RouteInfoModal = ({
     
     return (
       <View style={styles.environmentalImpactContainer}>
-        <Text style={styles.sectionTitle}>Comparer les modes de transport</Text>
+        {/* <Text style={styles.sectionTitle}>Comparer les modes de transport</Text>
         <Text style={styles.impactDescription}>
           Choisissez un mode de transport pour voir son itinéraire et son impact CO2:
         </Text>
-        
+         */}
         <View style={styles.transportModesGrid}>
           {modesConfig.map((mode) => {
             // Trouver les données d'impact correspondant à ce mode
@@ -241,10 +241,12 @@ const RouteInfoModal = ({
                 <View style={[styles.transportModeIcon, { backgroundColor: mode.color }]}>
                   <Ionicons name={mode.icon} size={20} color="white" />
                 </View>
+                <View style={{ flex: 1, justifyContent: 'center', alignItems: 'left', marginLeft: 10 }}>
                 <Text style={styles.transportModeName}>{mode.name}</Text>
                 <View style={styles.co2Container}>
                   <FontAwesome name="leaf" size={12} color="#666" />
                   <Text style={styles.co2Value}>{co2Value}</Text>
+                </View>
                 </View>
               </TouchableOpacity>
             );
@@ -740,14 +742,14 @@ const styles = StyleSheet.create({
   },
   // Nouveaux styles pour la section d'impact environnemental
   environmentalImpactContainer: {
-    marginTop: 15,
-    marginBottom: 10,
-    padding: 10,
+    marginTop: 0,
+    marginBottom: 0,
+    paddingHorizontal: 10,
     backgroundColor: '#f9f9f9',
     borderRadius: 10,
   },
   impactDescription: {
-    fontSize: 13,
+    fontSize: 12,
     color: '#666',
     marginBottom: 10,
   },
@@ -767,6 +769,7 @@ const styles = StyleSheet.create({
     shadowOffset: { width: 0, height: 1 },
     shadowOpacity: 0.1,
     shadowRadius: 2,
+    flexDirection: 'row',
   },
   transportModeIcon: {
     width: 36,
@@ -774,12 +777,12 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 6,
+    //marginBottom: 6,
   },
   transportModeName: {
     fontSize: 14,
     fontWeight: 'bold',
-    marginBottom: 4,
+    //marginBottom: 4,
   },
   co2Container: {
     flexDirection: 'row',
