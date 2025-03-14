@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { StyleSheet, View, Text, ActivityIndicator, TouchableOpacity } from 'react-native';
 import MapView, { Polyline, Marker, Callout } from 'react-native-maps';
 import { Ionicons, FontAwesome5, MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
@@ -17,10 +17,11 @@ const RouteMap = ({
   onRegionChangeComplete 
 }) => {
   const insets = useSafeAreaInsets();
-  // États pour gérer l'affichage des points d'intérêt
+  const mapRef = useRef(null);
   const [showFountains, setShowFountains] = useState(false);
   const [showToilets, setShowToilets] = useState(false);
   const [showMuseums, setShowMuseums] = useState(false);
+  const [show3DBuildings, setShow3DBuildings] = useState(false);
 
   useEffect(() => {
     const getLocationPermission = async () => {
@@ -63,6 +64,19 @@ const RouteMap = ({
   const formatTime = (serviceDay, seconds) => {
     const date = new Date((serviceDay + seconds) * 1000);
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+  };
+
+  // Fonction pour basculer la vue 3D - modifie uniquement l'angle
+  const toggle3DBuildings = () => {
+    if (mapRef.current) {
+      const newState = !show3DBuildings;
+      setShow3DBuildings(newState);
+      
+      // Anime uniquement le pitch (angle) sans modifier les autres paramètres
+      mapRef.current.animateCamera({
+        pitch: newState ? 45 : 0,
+      }, 500);
+    }
   };
 
   return (
@@ -112,7 +126,25 @@ const RouteMap = ({
         </TouchableOpacity>
       </View>
       
+      {/* Bouton 3D sur la droite de l'écran */}
+      <View style={[styles.rightButtonContainer, { right: 10 + insets.right }]}>
+        <TouchableOpacity 
+          style={[styles.filterButton, show3DBuildings && styles.filterButtonActive]} 
+          onPress={toggle3DBuildings}
+        >
+          {/* <MaterialIcons 
+            name="3d-rotation" 
+            size={24} 
+            color={show3DBuildings ? "white" : "#0D47A1"} 
+          /> */}
+          <Text style={[styles.filterText, show3DBuildings && styles.filterTextActive,{fontSize: 14, fontWeight: '900',alignSelf: 'center'}]}>
+            3D
+          </Text>
+        </TouchableOpacity>
+      </View>
+
       <MapView
+        ref={mapRef}
         style={styles.map}
         region={region}
         onRegionChangeComplete={onRegionChangeComplete}
@@ -120,6 +152,8 @@ const RouteMap = ({
         showsBuildings={true}
         showsTraffic={true}
         showsUserLocation={true}
+        pitchEnabled={true}
+        rotateEnabled={true}
       >
         {routeCoordinates.length > 0 && (
           <Polyline
@@ -377,6 +411,17 @@ const styles = StyleSheet.create({
     padding: 6,
     borderWidth: 2,
     borderColor: 'white',
+  },
+  rightButtonContainer: {
+    position: 'absolute',
+    right: 10,
+    top: 200, // Position plus basse que les filtres principaux
+    zIndex: 999,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.3,
+    shadowRadius: 3,
+    elevation: 5,
   },
 });
 
