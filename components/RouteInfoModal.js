@@ -412,7 +412,7 @@ const renderMarcusEcoSuggestion = () => {
   }
   
   // Bike trip that's not much longer than car (at most 10 mins more)
-  if (bikeDurationMins - carDurationMins <= 30) {
+  if (bikeDurationMins - carDurationMins <= 20) {
     return (
       <View style={styles.marcusSuggestionContainer}>
         <Image 

@@ -176,8 +176,60 @@ const getAllTransportsImpactCO2 = async (km) => {
   }
 };
 
+/**
+ * Récupère les données de pollution de l'air pour une localisation donnée
+ * @param {number} lat - Latitude de la localisation
+ * @param {number} lon - Longitude de la localisation
+ * @returns {Promise<Object>} - Les données de pollution de l'air
+ */
+const getAirPollution = async (lat, lon) => {
+  const API_KEY = 'c16349fa5dbbee59d43f8e0e8d19df0f';
+  
+  try {
+    const response = await fetch(
+      `http://api.openweathermap.org/data/2.5/air_pollution?lat=${lat}&lon=${lon}&appid=${API_KEY}`
+    );
+    
+    if (!response.ok) {
+      throw new Error(`Erreur HTTP: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Erreur lors de la récupération des données de pollution:", error);
+    return null;
+  }
+};
+
+/**
+ * Récupère les données météo pour une localisation donnée
+ * @param {number} lat - Latitude de la localisation
+ * @param {number} lon - Longitude de la localisation
+ * @returns {Promise<Object>} - Les données météo
+ */
+const getWeather = async (lat, lon) => {
+  const API_KEY = 'c16349fa5dbbee59d43f8e0e8d19df0f';
+  
+  try {
+    const response = await fetch(
+      `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`
+    );
+    
+    if (!response.ok) {
+      throw new Error(`Erreur HTTP: ${response.status}`);
+    }
+    
+    const data = await response.json();
+    return data;
+  } catch (error) {
+    console.error("Erreur lors de la récupération des données météo:", error);
+    return null;
+  }
+};
+
 // Exemple d'utilisation:
 // const impact = await getImpactCO2(5, 'bus'); // 5km en bus
 // const allImpacts = await getAllTransportsImpactCO2(5); // 5km pour tous les transports
 
-export {convertionLieu, itineraire, adresseAutocomplete, getImpactCO2, getAllTransportsImpactCO2};
+export {convertionLieu, itineraire, adresseAutocomplete, getImpactCO2, getAllTransportsImpactCO2, getAirPollution, getWeather};

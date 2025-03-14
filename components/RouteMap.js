@@ -6,6 +6,7 @@ import { getStopCodeByName } from '../utils/stopUtils';
 import * as Location from 'expo-location';
 import routesData from '../assets/routes.json';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { getWeather, getAirPollution } from '../assets/api'; // Import the API functions
 
 const RouteMap = ({ 
   region, 
@@ -22,6 +23,9 @@ const RouteMap = ({
   const [showToilets, setShowToilets] = useState(false);
   const [showMuseums, setShowMuseums] = useState(false);
   const [show3DBuildings, setShow3DBuildings] = useState(false);
+  const [weatherData, setWeatherData] = useState(null);
+  const [pollutionData, setPollutionData] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const getLocationPermission = async () => {
@@ -79,6 +83,72 @@ const RouteMap = ({
     }
   };
 
+  useEffect(() => {
+    const fetchWeatherAndPollution = async () => {
+      if (region) {
+        setLoading(true);
+        try {
+          const weather = await getWeather(region.latitude, region.longitude);
+          const pollution = await getAirPollution(region.latitude, region.longitude);
+          
+          setWeatherData(weather);
+          setPollutionData(pollution);
+        } catch (error) {
+          console.error('Error fetching weather or pollution data:', error);
+        } finally {
+          setLoading(false);
+        }
+      }
+    };
+    
+    fetchWeatherAndPollution();
+  }, [region.latitude, region.longitude]);
+
+  // Get the weather icon based on the weather condition code
+  const getWeatherIcon = (weatherCode) => {
+    if (!weatherCode) return 'weather-partly-cloudy';
+    
+    // Weather codes from OpenWeather API: https://openweathermap.org/weather-conditions
+    if (weatherCode >= 200 && weatherCode < 300) return 'weather-lightning';
+    if (weatherCode >= 300 && weatherCode < 400) return 'weather-pouring';
+    if (weatherCode >= 500 && weatherCode < 600) return 'weather-rainy';
+    if (weatherCode >= 600 && weatherCode < 700) return 'weather-snowy';
+    if (weatherCode >= 700 && weatherCode < 800) return 'weather-fog';
+    if (weatherCode === 800) return 'weather-sunny';
+    if (weatherCode > 800) return 'weather-partly-cloudy';
+    
+    return 'weather-partly-cloudy';
+  };
+
+  // Get color for air quality based on the AQI value
+  const getAirQualityColor = (aqi) => {
+    if (!aqi && aqi !== 0) return '#999'; // Gray for unknown
+    
+    // AQI levels from OpenWeather API
+    switch (aqi) {
+      case 1: return '#4CAF50'; // Good - Green
+      case 2: return '#8BC34A'; // Fair - Light Green
+      case 3: return '#FFC107'; // Moderate - Yellow
+      case 4: return '#FF9800'; // Poor - Orange
+      case 5: return '#F44336'; // Very Poor - Red
+      default: return '#999';   // Unknown - Gray
+    }
+  };
+
+  // Get text description for air quality
+  const getAirQualityText = (aqi) => {
+    if (!aqi && aqi !== 0) return 'Inconnu';
+    
+    switch (aqi) {
+      case 1: return 'Bonne';
+      case 2: return 'Correcte';
+      case 3: return 'Moyenne';
+      case 4: return 'Mauvaise';
+      case 5: return 'Très mauvaise';
+      default: return 'Inconnu';
+    }
+  };
+
   return (
     <>
       {/* Boutons de filtre au-dessus de la carte avec ajustement pour l'encoche */}
@@ -126,8 +196,46 @@ const RouteMap = ({
         </TouchableOpacity>
       </View>
       
-      {/* Bouton 3D sur la droite de l'écran */}
-      <View style={[styles.rightButtonContainer, { right: 10 + insets.right }]}>
+      {/* Weather and Air Quality Indicators */}
+      <View style={[styles.weatherContainer, { top: 70 + insets.top }]}>
+        {loading && false ? (
+          <ActivityIndicator size="small" color="#4285F4" />
+        ) : (
+          <>
+            {weatherData && (
+              <TouchableOpacity         activeOpacity={1}
+              style={styles.weatherButton}>
+                
+                <MaterialCommunityIcons 
+                  name={getWeatherIcon(weatherData.weather?.[0]?.id)} 
+                  size={20} 
+                  color="#0D47A1" 
+                />
+                <Text style={styles.weatherText}>
+                  {Math.round(weatherData.main?.temp)}°C
+                </Text>
+              </TouchableOpacity>
+            )}
+            
+            {pollutionData && pollutionData.list && pollutionData.list[0] && (
+              <TouchableOpacity 
+              activeOpacity={1}
+
+                style={[
+                  styles.airQualityButton, 
+                  { backgroundColor: getAirQualityColor(pollutionData.list[0].main.aqi) }
+                ]}
+              >
+                <MaterialIcons name="air" size={15} color="white" />
+                <Text style={styles.airQualityText}>
+                  {getAirQualityText(pollutionData.list[0].main.aqi)}
+                </Text>
+              </TouchableOpacity>
+            )}
+          </>
+        )}
+
+    <View style={[styles.rightButtonContainer, { right: 10 + insets.right }]}>
         <TouchableOpacity 
           style={[styles.filterButton, show3DBuildings && styles.filterButtonActive]} 
           onPress={toggle3DBuildings}
@@ -142,6 +250,10 @@ const RouteMap = ({
           </Text>
         </TouchableOpacity>
       </View>
+      </View>
+
+      {/* Bouton 3D sur la droite de l'écran */}
+      
 
       <MapView
         ref={mapRef}
@@ -413,15 +525,61 @@ const styles = StyleSheet.create({
     borderColor: 'white',
   },
   rightButtonContainer: {
-    position: 'absolute',
-    right: 10,
-    top: 200, // Position plus basse que les filtres principaux
+    position: 'relative',
+    //right: 10,
+    //top: 200, // Position plus basse que les filtres principaux
     zIndex: 999,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
     shadowOpacity: 0.3,
     shadowRadius: 3,
     elevation: 5,
+  },
+  weatherContainer: {
+    position: 'absolute',
+    right: 10,
+    flexDirection: 'column',
+    alignItems: 'flex-end',
+    zIndex: 999,
+  },
+  weatherButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: 'white',
+    paddingVertical: 5,
+    paddingHorizontal: 8,
+    borderRadius: 20,
+    marginBottom: 10,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+  },
+  weatherText: {
+    marginLeft: 6,
+    fontSize: 14,
+    fontWeight: 'bold',
+    color: '#0D47A1',
+  },
+  airQualityButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 5,
+    paddingHorizontal: 8,
+    borderRadius: 20,
+    marginBottom: 10,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.2,
+    shadowRadius: 2,
+  },
+  airQualityText: {
+    marginLeft: 6,
+    fontSize: 10,
+    fontWeight: 'bold',
+    color: 'white',
   },
 });
 
