@@ -1,6 +1,6 @@
 import { StatusBar } from 'expo-status-bar';
-import React, { useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, Alert, Image, SafeAreaView } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { StyleSheet, Text, View, TouchableOpacity, Alert, Image, SafeAreaView, ActivityIndicator } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { convertionLieu, itineraire, getAllTransportsImpactCO2 } from './assets/api';
 import { getApiTransportMode, parseRouteGeometry, extractTransitPoints, selectAppropriateItinerary } from './utils/routeUtils';
@@ -149,14 +149,19 @@ export default function App() {
   const searchRoute = async () => {
     if (!startLocation || !endLocation) {
       
-      
       Alert.alert('Champs requis', 'Veuillez entrer un lieu de départ et une destination');
       setStartLocation(startLocation || 'Ile Verte, Grenoble');
       setEndLocation(endLocation || 'Rue Ampère, Grenoble');
       return;
     }
-
+    setModalVisible(false);
+    
     setLoading(true);
+
+    // Add a 10-second delay for Marcus to think
+    await new Promise(resolve => setTimeout(resolve,1000));
+
+
     try {
       // Convert locations to coordinates
       let startCoords;
@@ -393,6 +398,44 @@ export default function App() {
     }
   };
 
+  // Component for loading overlay with Marcus thinking
+  const LoadingOverlay = () => {
+    const [loadingText, setLoadingText] = useState("Marcus réfléchit");
+    const [dots, setDots] = useState("");
+
+    // Animation effect for the thinking dots
+    useEffect(() => {
+      const interval = setInterval(() => {
+        setDots(prevDots => {
+          if (prevDots === "...") return "";
+          return prevDots + ".";
+        });
+      }, 500); // Change speed by adjusting this value
+
+      return () => clearInterval(interval);
+    }, []);
+
+    return (
+      <View style={styles.loadingOverlay}>
+        <View style={styles.loadingContainer}>
+          <Image 
+            source={require('./assets/image/marcus-reflechis.png')} 
+            style={styles.loadingImage}
+            resizeMode="contain"
+          />
+          <View style={styles.loadingTextContainer}>
+            <Text style={styles.loadingText}>{loadingText}{dots}</Text>
+            <ActivityIndicator 
+              size="medium" 
+              color="white" 
+              style={styles.loadingIndicator} 
+            />
+          </View>
+        </View>
+      </View>
+    );
+  };
+
   // Main render function with conditional rendering
   return (
     <View style={styles.container}>
@@ -489,10 +532,15 @@ export default function App() {
           )}
           
           <StatusBar style="auto" />
+          
+          {/* Loading overlay APRÈS tout le reste */}
+          {loading && 
+            <LoadingOverlay />
+          }
         </>
       )}
-    </View>
-  );
+  </View>
+);
 }
 
 // Add new welcome screen styles
@@ -613,5 +661,56 @@ const styles = StyleSheet.create({
   },
   summaryText: {
     fontWeight: 'bold',
+  },
+  loadingOverlay: {
+    position: 'absolute',
+    width: '100%',
+    height: '100%',
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    justifyContent: 'center',
+    alignItems: 'center',
+    zIndex: 9999,
+  },
+  loadingContainer: {
+    backgroundColor: 'transparent',
+    borderRadius: 20,
+    padding: 0,
+    alignItems: 'center',
+    width: '80%',
+    maxWidth: 300,
+    elevation: 5,
+    shadowColor: '#000',
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 4,
+  },
+  loadingImage: {
+    width: 250,
+    height: 250,
+    marginBottom: 0,
+  },
+  loadingTextContainer: {
+    backgroundColor: 'rgba(0, 0, 0, 0.7)',
+    borderRadius: 20,
+    padding: 15,
+    alignItems: 'center',
+    marginTop: 10,
+    flexDirection: 'row',
+    justifyContent: 'center',
+  },
+  loadingText: {
+    textShadowColor: 'black',
+    textShadowOffset: { width: 1, height: 1 },
+    textShadowRadius: 5,
+    fontSize: 18,
+    fontWeight: '900',
+    color: 'white',
+    marginRight: 10,
+  },
+  loadingIndicator: {
+    marginHorizontal: 5,
   },
 });
