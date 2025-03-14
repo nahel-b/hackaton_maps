@@ -20,7 +20,9 @@ const RouteModal = ({
   onTransportModeChange,
   onWheelchairModeChange,
   onWalkSpeedChange, // New handler
-  onBikeSpeedChange  // New handler
+  onBikeSpeedChange,  // New handler
+  safetyModeForWomen = false,
+  onSafetyModeChange,
 }) => {
   
   // Function to get speed text and color based on value
@@ -179,6 +181,23 @@ const RouteModal = ({
             </View>
             <Text style={styles.accessibilityHint}>
               Privilégier les itinéraires accessibles en fauteuil roulant
+            </Text>
+          </View>
+          
+          {/* Option pour mode sécurité femmes */}
+          <View style={styles.accessibilityContainer}>
+            <View style={styles.switchContainer}>
+              <Ionicons name="shield-checkmark" size={24} color="#E91E63" />
+              <Text style={styles.switchLabel}>Mode sécurité femmes</Text>
+              <Switch
+                value={safetyModeForWomen}
+                onValueChange={onSafetyModeChange}
+                trackColor={{ false: "#D1D1D6", true: "#ffb6c1" }}
+                thumbColor={safetyModeForWomen ? "#E91E63" : "#f4f3f4"}
+              />
+            </View>
+            <Text style={styles.accessibilityHint}>
+              Privilégier les itinéraires sécurisés et éviter certains quartiers la nuit
             </Text>
           </View>
           

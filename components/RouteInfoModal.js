@@ -366,8 +366,10 @@ const RouteInfoModal = ({ visible, routeData, onClose, transportMode, stopTimesD
                                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                    <View style={[
                                    { 
-                                    width: 20,
-                                    height: 20,
+                                    paddingHorizontal: 4,
+                                    minHeight : 20,
+                                    minWidth : 20,
+                                    aspectRatio: 1,
                                     borderRadius: 17.5,
                                     alignItems: 'center',
                                     justifyContent: 'center',

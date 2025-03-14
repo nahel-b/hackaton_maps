@@ -15,12 +15,14 @@ const RouteMap = ({
 }) => {
 
   const getTransitIcon = (mode) => {
+    console.log('Mode:', mode);
     switch(mode) {
       case 'BUS': return <FontAwesome5 name="bus" size={18} color="white" />;
       case 'TRAM': return <MaterialIcons name="tram" size={18} color="white" />;
       case 'SUBWAY': return <FontAwesome5 name="subway" size={18} color="white" />;
       case 'RAIL': return <MaterialIcons name="train" size={18} color="white" />;
       case 'WALK': return <Ionicons name="walk" size={18} color="white" />;
+      case "CABLE_CAR" : return <FontAwesome5 name="tram" size={18} color="white" />;
       default: return <Ionicons name="directions-transit" size={18} color="white" />;
     }
   };

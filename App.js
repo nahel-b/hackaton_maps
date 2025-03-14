@@ -32,6 +32,7 @@ export default function App() {
   const [stopTimesData, setStopTimesData] = useState({});
   const [walkSpeed, setWalkSpeed] = useState(3);
   const [bikeSpeed, setBikeSpeed] = useState(11);
+  const [safetyModeForWomen, setSafetyModeForWomen] = useState(false);
 
   // Format duration helper function
   const formatDuration = (seconds) => {
@@ -264,6 +265,8 @@ export default function App() {
         onWheelchairModeChange={setWheelchairMode}
         onWalkSpeedChange={handleWalkSpeedChange}
         onBikeSpeedChange={handleBikeSpeedChange}
+        safetyModeForWomen={safetyModeForWomen}
+        onSafetyModeChange={setSafetyModeForWomen}
       />
 
       {/* Modal d'informations d'itinéraire */}
