@@ -2,7 +2,7 @@ import { StatusBar } from 'expo-status-bar';
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { convertionLieu, itineraire } from './assets/api';
+import { convertionLieu, itineraire, getAllTransportsImpactCO2 } from './assets/api';
 import { getApiTransportMode, parseRouteGeometry, extractTransitPoints, selectAppropriateItinerary } from './utils/routeUtils';
 import RouteMap from './components/RouteMap';
 import RouteModal from './components/RouteModal';
@@ -34,6 +34,7 @@ export default function App() {
   const [walkSpeed, setWalkSpeed] = useState(3);
   const [bikeSpeed, setBikeSpeed] = useState(11);
   const [safetyModeForWomen, setSafetyModeForWomen] = useState(false);
+  const [transportImpactData, setTransportImpactData] = useState(null);
 
   // Format duration helper function
   const formatDuration = (seconds) => {
@@ -210,6 +211,15 @@ export default function App() {
         const allStopTimesData = await fetchAllStopTimes(extractedTransitPoints);
         setStopTimesData(allStopTimesData);
         
+        // Récupérer l'impact CO2 pour tous les modes de transport
+        // Calculer la distance en km
+        const itinerary = selectAppropriateItinerary(routeData.plan.itineraries, apiTransportMode);
+        if (itinerary) {
+          const distanceKm = itinerary.walkDistance / 1000; // Conversion m en km
+          const impactData = await getAllTransportsImpactCO2(distanceKm);
+          setTransportImpactData(impactData);
+        }
+        
         // Update map region to fit route
         if (coordinates.length > 0) {
           setRegion({
@@ -285,6 +295,65 @@ export default function App() {
     setBikeSpeed(value);
   };
 
+  // Fonction pour changer le mode de transport et recalculer l'itinéraire
+  const changeTransportMode = async (newMode) => {
+    if (newMode === transportMode) {
+      return; // Éviter de recalculer si c'est déjà le mode actuel
+    }
+    
+    setTransportMode(newMode);
+    setInfoModalVisible(false);
+    setIsInfoModalMinimized(true);
+    setLoading(true);
+    
+    try {
+      // Récupérer l'itinéraire avec le nouveau mode de transport
+      const apiTransportMode = getApiTransportMode(newMode, wheelchairMode);
+      
+      // Vérifier que nous avons des coordonnées valides
+      if (!startCoords || !endCoords) {
+        throw new Error("Coordonnées de départ ou d'arrivée manquantes");
+      }
+      
+      const newRouteData = await itineraire(
+        startCoords, 
+        endCoords, 
+        apiTransportMode, 
+        wheelchairMode,
+        newMode === 'walking' ? walkSpeed : null,
+        newMode === 'bicycle' ? bikeSpeed : null
+      );
+      
+      if (newRouteData) {
+        // Mettre à jour les données de l'itinéraire
+        setRouteData(newRouteData);
+        
+        // Mettre à jour les coordonnées de l'itinéraire
+        const coordinates = parseRouteGeometry(newRouteData, apiTransportMode);
+        setRouteCoordinates(coordinates);
+        
+        // Mettre à jour les points de transit
+        const extractedTransitPoints = extractTransitPoints(newRouteData, apiTransportMode);
+        setTransitPoints(extractedTransitPoints);
+        
+        // Mettre à jour les horaires des arrêts
+        const allStopTimesData = await fetchAllStopTimes(extractedTransitPoints);
+        setStopTimesData(allStopTimesData);
+        
+        // Afficher le nouveau modal d'informations
+        setInfoModalVisible(true);
+        setIsInfoModalMinimized(false);
+      } else {
+        Alert.alert('Erreur', 'Impossible de calculer le nouvel itinéraire');
+      }
+    } catch (error) {
+      console.error('Error changing transport mode:', error);
+      Alert.alert('Erreur', 'Une erreur est survenue lors du changement de mode de transport');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <View style={styles.container}>
       {/* Carte en arrière-plan */}
@@ -327,6 +396,8 @@ export default function App() {
           routeData={routeData}
           transportMode={transportMode}
           stopTimesData={stopTimesData}
+          impactData={transportImpactData}
+          onChangeTransportMode={changeTransportMode}
           onClose={() => {}} // No-op since we don't actually close it
           onReset={resetRoute}
           onMinimize={minimizeInfoModal}

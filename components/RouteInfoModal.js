@@ -1,13 +1,23 @@
 import React, { useState, useEffect } from 'react';
 import { StyleSheet, Modal, View, Text, ScrollView, TouchableOpacity, Animated, PanResponder, Dimensions } from 'react-native';
-import { Ionicons, FontAwesome5 } from '@expo/vector-icons';
+import { Ionicons, FontAwesome5, MaterialCommunityIcons, FontAwesome } from '@expo/vector-icons';
 import { selectAppropriateItinerary, hasTransitSegments } from '../utils/routeUtils';
 
 const SCREEN_HEIGHT = Dimensions.get('window').height;
 const FULL_MODAL_HEIGHT = SCREEN_HEIGHT * 0.8;
 const MINIMIZED_MODAL_HEIGHT = 120;
 
-const RouteInfoModal = ({ visible, routeData, onClose, transportMode, stopTimesData = {}, onReset, onMinimize }) => {
+const RouteInfoModal = ({ 
+  visible, 
+  routeData, 
+  onClose, 
+  transportMode, 
+  stopTimesData = {}, 
+  impactData = null,
+  onChangeTransportMode,
+  onReset, 
+  onMinimize 
+}) => {
   const [modalHeight] = useState(new Animated.Value(FULL_MODAL_HEIGHT));
   const [isMinimized, setIsMinimized] = useState(false);
 
@@ -168,6 +178,82 @@ const RouteInfoModal = ({ visible, routeData, onClose, transportMode, stopTimesD
 
   const transitStops = getTransitStops();
 
+  // Add a new section to display environmental impact
+  const renderEnvironmentalImpact = () => {
+    // Vérifiez que impactData est un tableau non vide
+    if (!impactData || !Array.isArray(impactData) || impactData.length === 0){console.log("e"); return null;}
+    
+    // Les modes que nous voulons afficher
+    const modesConfig = [
+      { id: 'walking', name: 'Marche', icon: 'walk', color: '#43A047' },
+      { id: 'bicycle', name: 'Vélo', icon: 'bicycle', color: '#1E88E5' },
+      { id: 'bus', name: 'Transport', icon: 'bus', color: '#7B1FA2' },
+      { id: 'car', name: 'Voiture', icon: 'car', color: '#E53935' }
+    ];
+    
+    // Fonction pour associer les IDs de l'API impactCO2 à nos modes UI
+    const mapApiIdToUiMode = (apiId) => {
+      const mapping = {
+        '30': 'walking',   // Marche
+        '7': 'bicycle',    // Vélo
+        '4': 'car',        // Voiture thermique
+        '5': 'car',        // Voiture électrique (on utilise le même)
+        '9': 'bus',        // Bus thermique
+        '16': 'bus',       // Bus électrique
+        '10': 'bus'        // Tram (on le met avec bus pour simplifier)
+      };
+      return mapping[apiId] || null;
+    };
+    
+    // Log pour le débogage
+    console.log('Impact data:', JSON.stringify(impactData));
+    
+    return (
+      <View style={styles.environmentalImpactContainer}>
+        <Text style={styles.sectionTitle}>Comparer les modes de transport</Text>
+        <Text style={styles.impactDescription}>
+          Choisissez un mode de transport pour voir son itinéraire et son impact CO2:
+        </Text>
+        
+        <View style={styles.transportModesGrid}>
+          {modesConfig.map((mode) => {
+            // Trouver les données d'impact correspondant à ce mode
+            const modeImpactData = Array.isArray(impactData) ? impactData.find(item => 
+              item && item.id && mapApiIdToUiMode(item.id.toString()) === mode.id
+            ) : null;
+            
+            // Si on n'a pas de données pour ce mode, on l'affiche quand même
+            const co2Value = modeImpactData ? 
+              `${modeImpactData.value.toFixed(1)} kgCO₂e` : 
+              'Non disponible';
+              
+            const isActive = transportMode === mode.id;
+            
+            return (
+              <TouchableOpacity
+                key={mode.id}
+                style={[
+                  styles.transportModeItem,
+                  isActive && { borderColor: mode.color, borderWidth: 2 }
+                ]}
+                onPress={() => onChangeTransportMode(mode.id)}
+              >
+                <View style={[styles.transportModeIcon, { backgroundColor: mode.color }]}>
+                  <Ionicons name={mode.icon} size={20} color="white" />
+                </View>
+                <Text style={styles.transportModeName}>{mode.name}</Text>
+                <View style={styles.co2Container}>
+                  <FontAwesome name="leaf" size={12} color="#666" />
+                  <Text style={styles.co2Value}>{co2Value}</Text>
+                </View>
+              </TouchableOpacity>
+            );
+          })}
+        </View>
+      </View>
+    );
+  };
+
   return (
     <Modal
       animationType="slide"
@@ -252,6 +338,8 @@ const RouteInfoModal = ({ visible, routeData, onClose, transportMode, stopTimesD
                   contentContainerStyle={styles.scrollViewContent}
                   showsVerticalScrollIndicator={true}
                 >
+                  {/* Section impact environnemental */}
+                  {renderEnvironmentalImpact()}
 
                   {/* Informations détaillées */}
                   {/* <View style={styles.infoRow}>
@@ -649,7 +737,59 @@ const styles = StyleSheet.create({
   },
   scrollViewContent: {
     paddingBottom: 20,
-  }
+  },
+  // Nouveaux styles pour la section d'impact environnemental
+  environmentalImpactContainer: {
+    marginTop: 15,
+    marginBottom: 10,
+    padding: 10,
+    backgroundColor: '#f9f9f9',
+    borderRadius: 10,
+  },
+  impactDescription: {
+    fontSize: 13,
+    color: '#666',
+    marginBottom: 10,
+  },
+  transportModesGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    justifyContent: 'space-between',
+  },
+  transportModeItem: {
+    width: '48%',
+    backgroundColor: 'white',
+    padding: 10,
+    borderRadius: 8,
+    marginBottom: 10,
+    elevation: 2,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 1 },
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  transportModeIcon: {
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginBottom: 6,
+  },
+  transportModeName: {
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginBottom: 4,
+  },
+  co2Container: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  co2Value: {
+    fontSize: 12,
+    marginLeft: 4,
+    color: '#555',
+  },
 });
 
 export default RouteInfoModal;
