@@ -40,6 +40,8 @@ export default function App() {
   const [bikeSpeed, setBikeSpeed] = useState(11);
   const [safetyModeForWomen, setSafetyModeForWomen] = useState(false);
   const [transportImpactData, setTransportImpactData] = useState(null);
+  // Add state for departure date
+  const [departureDate, setDepartureDate] = useState(new Date());
 
   // Function to handle starting the app
   const startApp = () => {
@@ -240,7 +242,8 @@ export default function App() {
         wheelchairMode,
         transportMode === 'walking' ? walkSpeed : null,
         transportMode === 'bicycle' ? bikeSpeed : null,
-        safetyModeForWomen // Pass the safety mode parameter
+        safetyModeForWomen,
+        departureDate // Add this parameter
       );
       
       if (routeData) {
@@ -424,17 +427,17 @@ export default function App() {
       <View style={styles.loadingOverlay}>
         <View style={styles.loadingContainer}>
           <Image 
-            source={require('./assets/image/marcus-reflechis.png')} 
+            source={require('./assets/image/marcus-reflechis.gif')} 
             style={styles.loadingImage}
             resizeMode="contain"
           />
           <View style={styles.loadingTextContainer}>
             <Text style={styles.loadingText}>{loadingText}{dots}</Text>
-            <ActivityIndicator 
+            {/* <ActivityIndicator 
               size="medium" 
               color="white" 
               style={styles.loadingIndicator} 
-            />
+            /> */}
           </View>
         </View>
       </View>
@@ -479,6 +482,8 @@ export default function App() {
             onBikeSpeedChange={handleBikeSpeedChange}
             safetyModeForWomen={safetyModeForWomen}
             onSafetyModeChange={setSafetyModeForWomen}
+            departureDate={departureDate}
+            onDepartureDateChange={setDepartureDate}
           />
 
           {/* Modal d'informations d'itinéraire */}
@@ -693,9 +698,9 @@ const styles = StyleSheet.create({
     shadowRadius: 4,
   },
   loadingImage: {
-    width: 250,
-    height: 250,
-    marginBottom: 0,
+    width: 900,
+    height: 400,
+    marginBottom: -80,
   },
   loadingTextContainer: {
     backgroundColor: 'rgba(0, 0, 0, 0.7)',

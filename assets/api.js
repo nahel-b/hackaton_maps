@@ -42,7 +42,7 @@ const getWayIds = () => {
   return preferredRoutes.join(',');
 };
 
-const itineraire = async (from, to, mode = 'WALK', wheelchair = false, walkSpeed = null, bikeSpeed = null, safetyMode = false) => {
+const itineraire = async (from, to, mode = 'WALK', wheelchair = false, walkSpeed = null, bikeSpeed = null, safetyMode = false, departureDate = null) => {
   try {
     const fromCoords = `${from.lat},${from.lon}`;
     const toCoords = `${to.lat},${to.lon}`;
@@ -55,38 +55,28 @@ const itineraire = async (from, to, mode = 'WALK', wheelchair = false, walkSpeed
       url += '&wheelchair=true';
     }
     
-    // Add walkSpeed if provided
+    // Add walk speed if provided
     if (walkSpeed) {
-      console.log("Vitesse de marche :", walkSpeed);
       url += `&walkSpeed=${walkSpeed/2.25}`;
     }
     
-    // Add bikeSpeed if provided
+    // Add bike speed if provided
     if (bikeSpeed) {
-      console.log("Vitesse de vélo :", bikeSpeed);
       url += `&bikeSpeed=${bikeSpeed/2.25}`;
     }
     
-    // Get preferred ways for safety mode
     // Add safety mode parameters
-    // if (safetyMode) {
-    //   const preferredWays = getWayIds();
-    //   console.log("Preferred ways:", preferredWays);
-
-    //   console.log("Mode sécurité activé");
-      
-    //   // Add preferred routes from the routes.json file
-    //   url += `&bannedRoutes=${preferredWays}`;
-      
-    
-    // }
-
     if (safetyMode) {
-      console.log("Mode sécurité activé");
       url += `&optimize=SAFE`;
     }
-
-    //console.log("URL de l'itinéraire :", url);
+    
+    // Add date time if provided
+    if (departureDate) {
+      const isoDate = departureDate.toISOString();
+      url += `&date=${isoDate.split('T')[0]}&time=${isoDate.split('T')[1].substring(0, 5)}`;
+    }
+    
+    // Rest of the function remains the same
     const response = await fetch(url);
     
     if (!response.ok) {

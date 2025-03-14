@@ -4,6 +4,7 @@ import Slider from '@react-native-community/slider';
 import { FontAwesome5, Ionicons } from '@expo/vector-icons';
 import { Switch } from 'react-native';
 import { adresseAutocomplete } from '../assets/api';
+import DateTimePicker from '@react-native-community/datetimepicker';
 
 const RouteModal = ({ 
   visible, 
@@ -24,6 +25,8 @@ const RouteModal = ({
   onBikeSpeedChange,  // New handler
   safetyModeForWomen = false,
   onSafetyModeChange,
+  departureDate = new Date(),
+  onDepartureDateChange,
 }) => {
   // State for autocomplete suggestions
   const [startSuggestions, setStartSuggestions] = useState([]);
@@ -149,6 +152,37 @@ const RouteModal = ({
       onBikeSpeedChange(11); // Reset to default biking speed
     }
   }, [transportMode]);
+
+  // Format date for display
+  const formatDate = (date) => {
+    return date.toLocaleDateString('fr-FR');
+  };
+  
+  // Format time for display
+  const formatTime = (date) => {
+    return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
+  };
+  
+  // Handle date change
+  const handleDateChange = (event, selectedDate) => {
+    if (selectedDate) {
+      const newDate = new Date(departureDate);
+      newDate.setFullYear(selectedDate.getFullYear());
+      newDate.setMonth(selectedDate.getMonth());
+      newDate.setDate(selectedDate.getDate());
+      onDepartureDateChange(newDate);
+    }
+  };
+  
+  // Handle time change
+  const handleTimeChange = (event, selectedTime) => {
+    if (selectedTime) {
+      const newDate = new Date(departureDate);
+      newDate.setHours(selectedTime.getHours());
+      newDate.setMinutes(selectedTime.getMinutes());
+      onDepartureDateChange(newDate);
+    }
+  };
 
   return (
     <Modal
@@ -330,6 +364,43 @@ const RouteModal = ({
               Privilégier les itinéraires sécurisés et éviter certains quartiers la nuit
             </Text>
           </View> */}
+          
+          {/* Date and Time Picker */}
+          <View style={styles.dateTimeContainer}>
+            <View style={styles.dateTimeHeader}>
+              <Ionicons name="calendar" size={24} color="#4285F4" />
+              <Text style={styles.dateTimeLabel}>Date et heure de départ</Text>
+            </View>
+            
+            <View style={styles.datePickersContainer}>
+              {/* Date Picker - Always visible */}
+              <View style={styles.pickerWrapper}>
+                <Text style={styles.pickerLabel}>Date:</Text>
+                <DateTimePicker
+                  value={departureDate}
+                  mode="date"
+                  is24Hour={true}
+                  display="default"
+                  onChange={handleDateChange}
+                  minimumDate={new Date()}
+                  style={styles.picker}
+                />
+              </View>
+              
+              {/* Time Picker - Always visible */}
+              <View style={styles.pickerWrapper}>
+                <Text style={styles.pickerLabel}>Heure:</Text>
+                <DateTimePicker
+                  value={departureDate}
+                  mode="time"
+                  is24Hour={true}
+                  display="default"
+                  onChange={handleTimeChange}
+                  style={styles.picker}
+                />
+              </View>
+            </View>
+          </View>
           
           {/* Bouton de recherche */}
           <TouchableOpacity 
@@ -527,6 +598,39 @@ const styles = StyleSheet.create({
   suggestionText: {
     marginLeft: 10,
     fontSize: 14,
+  },
+  dateTimeContainer: {
+    marginVertical: 10,
+    paddingVertical: 5,
+  },
+  dateTimeHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  dateTimeLabel: {
+    marginLeft: 10,
+    fontWeight: '500',
+  },
+  datePickersContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+  },
+  pickerWrapper: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    //backgroundColor: '#f5f5f5',
+    paddingVertical: 10,
+    paddingHorizontal: 15,
+    borderRadius: 10,
+    width: '48%',
+  },
+  pickerLabel: {
+    marginRight: 8,
+    fontSize: 14,
+  },
+  picker: {
+    flex: 1,
   },
 });
 
