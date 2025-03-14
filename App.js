@@ -8,6 +8,7 @@ import RouteMap from './components/RouteMap';
 import RouteModal from './components/RouteModal';
 import RouteInfoModal from './components/RouteInfoModal';
 import { getStopCodeByName } from './utils/stopUtils';
+import * as Location from 'expo-location';
 
 export default function App() {
   const [modalVisible, setModalVisible] = useState(true);
@@ -118,8 +119,57 @@ export default function App() {
     setLoading(true);
     try {
       // Convert locations to coordinates
-      const startCoords = await convertionLieu(startLocation);
-      const endCoords = await convertionLieu(endLocation);
+      let startCoords;
+      if (startLocation.toLowerCase() === 'my location' || startLocation.toLowerCase() === 'ma position') {
+        // Get user's current location
+        try {
+          const { status } = await Location.requestForegroundPermissionsAsync();
+          if (status !== 'granted') {
+        Alert.alert('Permission denied', 'Please allow location access to use your current position');
+        setLoading(false);
+        return;
+          }
+          
+          const location = await Location.getCurrentPositionAsync({});
+          startCoords = {
+        lat: location.coords.latitude,
+        lon: location.coords.longitude
+          };
+        } catch (error) {
+          console.error('Error getting location:', error);
+          Alert.alert('Error', 'Unable to get your current location');
+          setLoading(false);
+          return;
+        }
+      } else {
+        startCoords = await convertionLieu(startLocation);
+      }
+      
+      let endCoords;
+      if (endLocation.toLowerCase() === 'my location' || endLocation.toLowerCase() === 'ma position') {
+        // Get user's current location for end coordinates
+        try {
+          const { status } = await Location.requestForegroundPermissionsAsync();
+          if (status !== 'granted') {
+        Alert.alert('Permission denied', 'Please allow location access to use your current position');
+        setLoading(false);
+        return;
+          }
+          
+          const location = await Location.getCurrentPositionAsync({});
+          endCoords = {
+        lat: location.coords.latitude,
+        lon: location.coords.longitude
+          };
+        } catch (error) {
+          console.error('Error getting location:', error);
+          Alert.alert('Error', 'Unable to get your current location');
+          setLoading(false);
+          return;
+        }
+      } else {
+        endCoords = await convertionLieu(endLocation);
+      }
 
       if (!startCoords || !endCoords) {
         Alert.alert('Erreur', 'Impossible de trouver les coordonnées des lieux indiqués');

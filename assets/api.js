@@ -1,4 +1,5 @@
 const convertionLieu = async (searchQuery) => {
+  console.log("Recherche de :", searchQuery);
     try {
       const response = await fetch(
         `https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(
@@ -60,4 +61,25 @@ const itineraire = async (from, to, mode = 'WALK', wheelchair = false, walkSpeed
   }
 };
 
-export {convertionLieu, itineraire};
+const adresseAutocomplete = async (searchQuery) => {
+  try {
+    const response = await fetch(
+      `https://api-adresse.data.gouv.fr/search/?q=${encodeURIComponent(searchQuery+ ", Grenoble, France")}&limit=4&autocomplete=1`
+    );
+
+    if (!response.ok) {
+      throw new Error(`Erreur HTTP: ${response.status}`);
+    }
+
+    const data = await response.json();
+    return data.features; // Retourne les suggestions d'adresses
+  } catch (error) {
+    console.error("Erreur lors de l'autocomplétion d'adresse:", error);
+    return [];
+  }
+};
+
+
+
+
+export {convertionLieu, itineraire, adresseAutocomplete};

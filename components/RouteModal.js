@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { StyleSheet, Modal, View, Text, TextInput, TouchableOpacity } from 'react-native';
+import { StyleSheet, Modal, View, Text, TextInput, TouchableOpacity, FlatList } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { FontAwesome5, Ionicons } from '@expo/vector-icons';
 import { Switch } from 'react-native';
+import { adresseAutocomplete } from '../assets/api';
 
 const RouteModal = ({ 
   visible, 
@@ -24,6 +25,11 @@ const RouteModal = ({
   safetyModeForWomen = false,
   onSafetyModeChange,
 }) => {
+  // State for autocomplete suggestions
+  const [startSuggestions, setStartSuggestions] = useState([]);
+  const [endSuggestions, setEndSuggestions] = useState([]);
+  const [showStartSuggestions, setShowStartSuggestions] = useState(false);
+  const [showEndSuggestions, setShowEndSuggestions] = useState(false);
   
   // Function to get speed text and color based on value
   const getSpeedInfo = (isWalking, speed) => {
@@ -53,6 +59,83 @@ const RouteModal = ({
     return { text, color };
   };
   
+  // Function to handle autocomplete
+  const handleAutocomplete = async (text, isStart) => {
+    if (isStart) {
+      onStartLocationChange(text);
+    } else {
+      onEndLocationChange(text);
+    }
+    
+    if (text.length > 2) {
+      try {
+        const suggestions = await adresseAutocomplete(text);
+        if (isStart) {
+          setStartSuggestions(suggestions);
+          setShowStartSuggestions(true);
+        } else {
+          setEndSuggestions(suggestions);
+          setShowEndSuggestions(true);
+        }
+      } catch (error) {
+        console.error("Erreur lors de l'autocomplétion:", error);
+      }
+    } else {
+      // If input is too short, clear suggestions but show the "my position" option
+      if (isStart) {
+        setStartSuggestions([]);
+        setShowStartSuggestions(text.length === 0); // Show only if field is empty
+      } else {
+        setEndSuggestions([]);
+        setShowEndSuggestions(text.length === 0); // Show only if field is empty
+      }
+    }
+  };
+
+  // Handle selection of a suggestion
+  const handleSelectSuggestion = (suggestion, isStart) => {
+    let value = "";
+    
+    if (suggestion === "position") {
+      value = "Ma position";
+    } else if (suggestion.properties) {
+      value = suggestion.properties.label;
+    }
+    
+    if (isStart) {
+      onStartLocationChange(value);
+      setShowStartSuggestions(false);
+    } else {
+      onEndLocationChange(value);
+      setShowEndSuggestions(false);
+    }
+  };
+  
+  // Render suggestion item
+  const renderSuggestionItem = (item, isStart) => {
+    if (item === "position") {
+      return (
+        <TouchableOpacity
+          style={styles.suggestionItem}
+          onPress={() => handleSelectSuggestion("position", isStart)}
+        >
+          <Ionicons name="location" size={20} color="#4285F4" />
+          <Text style={styles.suggestionText}>Ma position</Text>
+        </TouchableOpacity>
+      );
+    } else {
+      return (
+        <TouchableOpacity
+          style={styles.suggestionItem}
+          onPress={() => handleSelectSuggestion(item, isStart)}
+        >
+          <Ionicons name="location-outline" size={20} color="#888" />
+          <Text style={styles.suggestionText}>{item.properties.label}</Text>
+        </TouchableOpacity>
+      );
+    }
+  };
+
   // Get speed info for current mode
   const isWalking = transportMode === 'walking';
   const currentSpeed = isWalking ? walkSpeed : bikeSpeed;
@@ -78,29 +161,68 @@ const RouteModal = ({
           <Text style={styles.modalTitle}>✨Planifier un itinéraire✨</Text>
           
           {/* Input départ */}
-          <View style={styles.inputContainer}>
-          <View style={{width: 5}}></View>
-
-            <Ionicons name="location" size={22} color="#888" />
-            <TextInput
-              style={styles.input}
-              placeholder="Point de départ"
-              value={startLocation}
-              onChangeText={onStartLocationChange}
-            />
+          <View>
+            <View style={styles.inputContainer}>
+              <View style={{width: 5}}></View>
+              <Ionicons name="location" size={22} color="#888" />
+              <TextInput
+                style={styles.input}
+                placeholder="Point de départ"
+                value={startLocation}
+                onChangeText={(text) => handleAutocomplete(text, true)}
+                onFocus={() => setShowStartSuggestions(true)}
+                onSubmitEditing={() => setShowStartSuggestions(false)}
+              />
+            </View>
+            
+            {/* Suggestions for start location */}
+            {showStartSuggestions && (
+              <View style={styles.suggestionsContainer}>
+                {startLocation.length === 0 && (
+                  <View>
+                    {renderSuggestionItem("position", true)}
+                  </View>
+                )}
+                {startSuggestions.map((suggestion, index) => (
+                  <View key={index}>
+                    {renderSuggestionItem(suggestion, true)}
+                  </View>
+                ))}
+              </View>
+            )}
           </View>
           
           {/* Input arrivée */}
-          <View style={[styles.inputContainer,{}]}>
-            <View style={{width: 10}}></View>
-            <FontAwesome5 name="flag-checkered" size={18} color="#888" />
-            <TextInput
-              style={styles.input}
-              placeholder="Destination"
-              value={endLocation}
-              onChangeText={onEndLocationChange}
-              
-            />
+          <View>
+            <View style={styles.inputContainer}>
+              <View style={{width: 10}}></View>
+              <FontAwesome5 name="flag-checkered" size={18} color="#888" />
+              <TextInput
+                style={styles.input}
+                placeholder="Destination"
+                value={endLocation}
+                onChangeText={(text) => handleAutocomplete(text, false)}
+                onFocus={() => setShowEndSuggestions(true)}
+                onSubmitEditing={() => setShowEndSuggestions(false)}
+
+              />
+            </View>
+            
+            {/* Suggestions for end location */}
+            {showEndSuggestions && (
+              <View style={styles.suggestionsContainer}>
+                {endLocation.length === 0 && (
+                  <View>
+                    {renderSuggestionItem("position", false)}
+                  </View>
+                )}
+                {endSuggestions.map((suggestion, index) => (
+                  <View key={index}>
+                    {renderSuggestionItem(suggestion, false)}
+                  </View>
+                ))}
+              </View>
+            )}
           </View>
           
           {/* Choix du mode de transport */}
@@ -361,6 +483,32 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#666',
     marginLeft: 34, // Aligner avec le texte du label
+  },
+  suggestionsContainer: {
+    backgroundColor: 'white',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 10,
+    marginTop: -10,
+    marginBottom: 10,
+    maxHeight: 200,
+    zIndex: 1000,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOffset: {width: 0, height: 2},
+    shadowOpacity: 0.1,
+    shadowRadius: 2,
+  },
+  suggestionItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  suggestionText: {
+    marginLeft: 10,
+    fontSize: 14,
   },
 });
 
