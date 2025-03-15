@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { StyleSheet, Modal, View, Text, TextInput, TouchableOpacity, FlatList, Image } from 'react-native';
+import React, { useState, useEffect, useRef } from 'react';
+import { StyleSheet, Modal, View, Text, TextInput, TouchableOpacity, FlatList, Image, Animated, Easing } from 'react-native';
 import Slider from '@react-native-community/slider';
 import { FontAwesome5, Ionicons } from '@expo/vector-icons';
 import { Switch } from 'react-native';
@@ -171,6 +171,41 @@ const RouteModal = ({
     }
   };
 
+  // Animation de Marcus flottant
+  const floatAnimation = useRef(new Animated.Value(0)).current;
+  
+  // Animation de flottement qui s'exécute en boucle
+  useEffect(() => {
+    if (visible) {
+      Animated.loop(
+        Animated.sequence([
+          // Monte doucement
+          Animated.timing(floatAnimation, {
+            toValue: -10,
+            duration: 1500,
+            easing: Easing.ease, // Correction ici
+            useNativeDriver: true
+          }),
+          // Descend doucement
+          Animated.timing(floatAnimation, {
+            toValue: 0,
+            duration: 1500,
+            easing: Easing.ease, // Correction ici
+            useNativeDriver: true
+          })
+        ])
+      ).start();
+    } else {
+      // Arrête l'animation si le modal n'est pas visible
+      floatAnimation.setValue(0);
+    }
+    
+    // Nettoyage quand le composant est démonté
+    return () => {
+      floatAnimation.setValue(0);
+    };
+  }, [visible]);
+
   return (
     <Modal
       animationType="slide"
@@ -180,9 +215,12 @@ const RouteModal = ({
       <View style={styles.centeredView}>
         <View style={styles.modalView}>
 
-          <Image 
+          <Animated.Image 
             source={require('../assets/image/marcus-bas.png')} 
-            style={styles.marcusImage}
+            style={[
+              styles.marcusImage,
+              {transform: [{ translateY: floatAnimation }]}  // Applique l'animation de flottement
+            ]}
             resizeMode="contain"
             pointerEvents="none"
           />
