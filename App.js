@@ -25,7 +25,7 @@ export default function App() {
   const [transportMode, setTransportMode] = useState('walking');
   const [wheelchairMode, setWheelchairMode] = useState(false);
   const [region, setRegion] = useState({
-    latitude: 45.1885, // Grenoble center
+    latitude: 45.1885,
     longitude: 5.7245,
     latitudeDelta: 0.0922,
     longitudeDelta: 0.0421,
@@ -41,15 +41,12 @@ export default function App() {
   const [bikeSpeed, setBikeSpeed] = useState(11);
   const [safetyModeForWomen, setSafetyModeForWomen] = useState(false);
   const [transportImpactData, setTransportImpactData] = useState(null);
-  // Add state for departure date
   const [departureDate, setDepartureDate] = useState(new Date());
 
-  // Function to handle starting the app
   const startApp = () => {
     setShowWelcomeScreen(false);
   };
 
-  // Welcome Screen Component
   const WelcomeScreen = () => {
     return (
       <SafeAreaView style={styles.welcomeContainer}>
@@ -80,8 +77,6 @@ export default function App() {
     );
   };
 
-  // Existing app logic remains unchanged
-  // Format duration helper function
   const formatDuration = (seconds) => {
     const minutes = Math.floor(seconds / 60);
     const hours = Math.floor(minutes / 60);
@@ -94,7 +89,6 @@ export default function App() {
     }
   };
   
-  // Format distance helper function
   const formatDistance = (meters) => {
     if (meters < 1000) {
       return `${Math.round(meters)} m`;
@@ -103,7 +97,6 @@ export default function App() {
     }
   };
 
-  // Function to get icon for transport mode
   const getTransportIcon = (mode) => {
     switch(mode) {
       case 'walking': return 'walk';
@@ -114,7 +107,6 @@ export default function App() {
     }
   };
 
-  // Reset the route and return to initial state
   const resetRoute = () => {
     setInfoModalVisible(false);
     setIsInfoModalMinimized(false);
@@ -127,19 +119,16 @@ export default function App() {
     setStopTimesData({});
   };
 
-  // Minimize the route info modal
   const minimizeInfoModal = () => {
     setIsInfoModalMinimized(true);
     setInfoModalVisible(false);
   };
 
-  // Maximize the route info modal
   const maximizeInfoModal = () => {
     setIsInfoModalMinimized(false);
     setInfoModalVisible(true);
   };
 
-  // Get the selected itinerary for summary
   const getSelectedItinerary = () => {
     if (!routeData || !routeData.plan || !routeData.plan.itineraries || routeData.plan.itineraries.length === 0) {
       return null;
@@ -147,11 +136,9 @@ export default function App() {
     
     const apiMode = getApiTransportMode(transportMode, wheelchairMode);
     
-    // This function is imported from utils/routeUtils.js
     return selectAppropriateItinerary(routeData.plan.itineraries, apiMode);
   };
 
-  // Search for route
   const searchRoute = async () => {
     if (!startLocation || !endLocation) {
       
@@ -164,15 +151,12 @@ export default function App() {
     
     setLoading(true);
 
-    // Add a 10-second delay for Marcus to think
     await new Promise(resolve => setTimeout(resolve,1000));
 
 
     try {
-      // Convert locations to coordinates
       let startCoords;
       if (startLocation.toLowerCase() === 'my location' || startLocation.toLowerCase() === 'ma position') {
-        // Get user's current location
         try {
           const { status } = await Location.requestForegroundPermissionsAsync();
           if (status !== 'granted') {
@@ -198,7 +182,7 @@ export default function App() {
       
       let endCoords;
       if (endLocation.toLowerCase() === 'my location' || endLocation.toLowerCase() === 'ma position') {
-        // Get user's current location for end coordinates
+
         try {
           const { status } = await Location.requestForegroundPermissionsAsync();
           if (status !== 'granted') {
@@ -228,14 +212,12 @@ export default function App() {
         return;
       }
 
-      // Save the coordinates
       setStartCoords(startCoords);
       setEndCoords(endCoords);
 
-      // Get API transport mode
       const apiTransportMode = getApiTransportMode(transportMode, wheelchairMode);
 
-      // Get route
+
       const routeData = await itineraire(
         startCoords, 
         endCoords, 
@@ -244,27 +226,21 @@ export default function App() {
         transportMode === 'walking' ? walkSpeed : null,
         transportMode === 'bicycle' ? bikeSpeed : null,
         safetyModeForWomen,
-        departureDate // Add this parameter
+        departureDate 
       );
       
       if (routeData) {
-        // Stocker les données complètes de l'itinéraire
         setRouteData(routeData);
         
-        // Passer le mode de transport à parseRouteGeometry
         const coordinates = parseRouteGeometry(routeData, apiTransportMode);
         setRouteCoordinates(coordinates);
         
-        // Extract transit points
         const extractedTransitPoints = extractTransitPoints(routeData, apiTransportMode);
         setTransitPoints(extractedTransitPoints);
         
-        // Fetch all stop times data
         const allStopTimesData = await fetchAllStopTimes(extractedTransitPoints);
         setStopTimesData(allStopTimesData);
         
-        // Récupérer l'impact CO2 pour tous les modes de transport
-        // Calculer la distance en km
         const itinerary = selectAppropriateItinerary(routeData.plan.itineraries, apiTransportMode);
         if (itinerary) {
           const distanceKm = itinerary.walkDistance / 1000; // Conversion m en km
@@ -272,7 +248,6 @@ export default function App() {
           setTransportImpactData(impactData);
         }
         
-        // Update map region to fit route
         if (coordinates.length > 0) {
           setRegion({
             ...region,
@@ -281,10 +256,8 @@ export default function App() {
           });
         }
         
-        // Hide planning modal to show the route
         setModalVisible(false);
         
-        // Show route info modal
         setInfoModalVisible(true);
       } else {
         Alert.alert('Erreur', 'Impossible de calculer l\'itinéraire');
@@ -300,12 +273,10 @@ export default function App() {
   const fetchAllStopTimes = async (transitPoints) => {
     const stopTimesResult = {};
     
-    // Process only BUS and TRAM points
     const transitStops = transitPoints.filter(
       point => point.mode === 'BUS' || point.mode === 'TRAM'
     );
     
-    // Fetch stop times for all transit stops
     await Promise.all(transitStops.map(async (point, index) => {
       try {
         
@@ -318,7 +289,6 @@ export default function App() {
           return;
         }
         
-        // Fetch real-time data
         const response = await fetch(`https://data.mobilites-m.fr/api/routers/default/index/stops/${stopCode}/stoptimes`, {
           headers: {
             origin: 'mon_appli'
@@ -347,10 +317,10 @@ export default function App() {
     setBikeSpeed(value);
   };
 
-  // Fonction pour changer le mode de transport et recalculer l'itinéraire
+
   const changeTransportMode = async (newMode) => {
     if (newMode === transportMode) {
-      return; // Éviter de recalculer si c'est déjà le mode actuel
+      return; 
     }
     
     setTransportMode(newMode);
@@ -359,10 +329,8 @@ export default function App() {
     setLoading(true);
     
     try {
-      // Récupérer l'itinéraire avec le nouveau mode de transport
       const apiTransportMode = getApiTransportMode(newMode, wheelchairMode);
       
-      // Vérifier que nous avons des coordonnées valides
       if (!startCoords || !endCoords) {
         throw new Error("Coordonnées de départ ou d'arrivée manquantes");
       }
@@ -374,26 +342,21 @@ export default function App() {
         wheelchairMode,
         newMode === 'walking' ? walkSpeed : null,
         newMode === 'bicycle' ? bikeSpeed : null,
-        safetyModeForWomen // Pass the safety mode parameter
+        safetyModeForWomen
       );
       
       if (newRouteData) {
-        // Mettre à jour les données de l'itinéraire
         setRouteData(newRouteData);
         
-        // Mettre à jour les coordonnées de l'itinéraire
         const coordinates = parseRouteGeometry(newRouteData, apiTransportMode);
         setRouteCoordinates(coordinates);
         
-        // Mettre à jour les points de transit
         const extractedTransitPoints = extractTransitPoints(newRouteData, apiTransportMode);
         setTransitPoints(extractedTransitPoints);
         
-        // Mettre à jour les horaires des arrêts
         const allStopTimesData = await fetchAllStopTimes(extractedTransitPoints);
         setStopTimesData(allStopTimesData);
         
-        // Afficher le nouveau modal d'informations
         setInfoModalVisible(true);
         setIsInfoModalMinimized(false);
       } else {
@@ -407,19 +370,17 @@ export default function App() {
     }
   };
 
-  // Component for loading overlay with Marcus thinking
   const LoadingOverlay = () => {
     const [loadingText, setLoadingText] = useState("Marcus réfléchit");
     const [dots, setDots] = useState("");
 
-    // Animation effect for the thinking dots
     useEffect(() => {
       const interval = setInterval(() => {
         setDots(prevDots => {
           if (prevDots === "...") return "";
           return prevDots + ".";
         });
-      }, 500); // Change speed by adjusting this value
+      }, 500); 
 
       return () => clearInterval(interval);
     }, []);
@@ -445,7 +406,6 @@ export default function App() {
     );
   };
 
-  // Main render function with conditional rendering
   return (
     <SafeAreaProvider>
     <View style={styles.container}>
@@ -453,7 +413,6 @@ export default function App() {
         <WelcomeScreen />
       ) : (
         <>
-          {/* Carte en arrière-plan */}
           <RouteMap
             region={region}
             routeCoordinates={routeCoordinates}
@@ -488,7 +447,6 @@ export default function App() {
             onDepartureDateChange={setDepartureDate}
           />
 
-          {/* Modal d'informations d'itinéraire */}
           {routeData && (
             <RouteInfoModal
               visible={infoModalVisible}
@@ -497,13 +455,12 @@ export default function App() {
               stopTimesData={stopTimesData}
               impactData={transportImpactData}
               onChangeTransportMode={changeTransportMode}
-              onClose={() => {}} // No-op since we don't actually close it
+              onClose={() => {}} 
               onReset={resetRoute}
               onMinimize={minimizeInfoModal}
             />
           )}
           
-          {/* Floating summary button when route info is minimized */}
           {isInfoModalMinimized && routeData && (
             <TouchableOpacity
               style={styles.routeSummaryButton}
@@ -556,7 +513,6 @@ export default function App() {
 );
 }
 
-// Add new welcome screen styles
 const styles = StyleSheet.create({
   container: {
     flex: 1,

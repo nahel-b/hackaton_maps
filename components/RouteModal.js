@@ -12,8 +12,8 @@ const RouteModal = ({
   endLocation, 
   transportMode, 
   wheelchairMode,
-  walkSpeed = 3,  // Default walk speed
-  bikeSpeed = 11, // Default bike speed
+  walkSpeed = 3,  
+  bikeSpeed = 11, 
   loading,
   onClose, 
   onSearch, 
@@ -21,48 +21,44 @@ const RouteModal = ({
   onEndLocationChange, 
   onTransportModeChange,
   onWheelchairModeChange,
-  onWalkSpeedChange, // New handler
-  onBikeSpeedChange,  // New handler
+  onWalkSpeedChange, 
+  onBikeSpeedChange, 
   safetyModeForWomen = false,
   onSafetyModeChange,
   departureDate = new Date(),
   onDepartureDateChange,
 }) => {
-  // State for autocomplete suggestions
   const [startSuggestions, setStartSuggestions] = useState([]);
   const [endSuggestions, setEndSuggestions] = useState([]);
   const [showStartSuggestions, setShowStartSuggestions] = useState(false);
   const [showEndSuggestions, setShowEndSuggestions] = useState(false);
   
-  // Function to get speed text and color based on value
-  const getSpeedInfo = (isWalking, speed) => {
+   const getSpeedInfo = (isWalking, speed) => {
     let text = "Normal";
-    let color = "#4285F4"; // Default blue color
-    
+    let color = "#4285F4"; 
     if (isWalking) {
-      // Walking speed categories
-      if (speed <= 2) {
+       if (speed <= 2) {
         text = "Lent";
-        color = "#FF9800"; // Orange
+        color = "#FF9800";  
       } else if (speed >= 4) {
         text = "Rapide";
-        color = "#4CAF50"; // Green
+        color = "#4CAF50"; 
       }
     } else {
-      // Biking speed categories
+
       if (speed <= 8) {
         text = "Lent";
-        color = "#FF9800"; // Orange
+        color = "#FF9800"; 
       } else if (speed >= 14) {
         text = "Rapide"; 
-        color = "#4CAF50"; // Green
+        color = "#4CAF50"; 
       }
     }
     
     return { text, color };
   };
   
-  // Function to handle autocomplete
+
   const handleAutocomplete = async (text, isStart) => {
     if (isStart) {
       onStartLocationChange(text);
@@ -84,18 +80,16 @@ const RouteModal = ({
         console.error("Erreur lors de l'autocomplétion:", error);
       }
     } else {
-      // If input is too short, clear suggestions but show the "my position" option
       if (isStart) {
         setStartSuggestions([]);
-        setShowStartSuggestions(text.length === 0); // Show only if field is empty
+        setShowStartSuggestions(text.length === 0); 
       } else {
         setEndSuggestions([]);
-        setShowEndSuggestions(text.length === 0); // Show only if field is empty
+        setShowEndSuggestions(text.length === 0);
       }
     }
   };
 
-  // Handle selection of a suggestion
   const handleSelectSuggestion = (suggestion, isStart) => {
     let value = "";
     
@@ -114,7 +108,6 @@ const RouteModal = ({
     }
   };
   
-  // Render suggestion item
   const renderSuggestionItem = (item, isStart) => {
     if (item === "position") {
       return (
@@ -139,31 +132,26 @@ const RouteModal = ({
     }
   };
 
-  // Get speed info for current mode
   const isWalking = transportMode === 'walking';
   const currentSpeed = isWalking ? walkSpeed : bikeSpeed;
   const speedInfo = getSpeedInfo(isWalking, currentSpeed);
 
-  // Reset speeds when transport mode changes
   useEffect(() => {
     if (transportMode === 'walking') {
-      onWalkSpeedChange(3); // Reset to default walking speed
+      onWalkSpeedChange(3); 
     } else if (transportMode === 'bicycle') {
-      onBikeSpeedChange(11); // Reset to default biking speed
+      onBikeSpeedChange(11); 
     }
   }, [transportMode]);
 
-  // Format date for display
   const formatDate = (date) => {
     return date.toLocaleDateString('fr-FR');
   };
   
-  // Format time for display
   const formatTime = (date) => {
     return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
   };
   
-  // Handle date change
   const handleDateChange = (event, selectedDate) => {
     if (selectedDate) {
       const newDate = new Date(departureDate);
@@ -174,7 +162,6 @@ const RouteModal = ({
     }
   };
   
-  // Handle time change
   const handleTimeChange = (event, selectedTime) => {
     if (selectedTime) {
       const newDate = new Date(departureDate);
@@ -192,7 +179,7 @@ const RouteModal = ({
     >
       <View style={styles.centeredView}>
         <View style={styles.modalView}>
-          {/* Marcus image in top-left corner */}
+
           <Image 
             source={require('../assets/image/marcus-bas.png')} 
             style={styles.marcusImage}
@@ -202,7 +189,7 @@ const RouteModal = ({
           
           <Text style={styles.modalTitle}> Planifie l'itinéraire</Text>
           
-          {/* Input départ */}
+
           <View>
             <View style={styles.inputContainer}>
               <View style={{width: 5}}></View>
@@ -217,7 +204,7 @@ const RouteModal = ({
               />
             </View>
             
-            {/* Suggestions for start location */}
+
             {showStartSuggestions && (
               <View style={styles.suggestionsContainer}>
                 {startLocation.length === 0 && (
@@ -234,7 +221,7 @@ const RouteModal = ({
             )}
           </View>
           
-          {/* Input arrivée */}
+
           <View>
             <View style={styles.inputContainer}>
               <View style={{width: 10}}></View>
@@ -250,7 +237,6 @@ const RouteModal = ({
               />
             </View>
             
-            {/* Suggestions for end location */}
             {showEndSuggestions && (
               <View style={styles.suggestionsContainer}>
                 {endLocation.length === 0 && (
@@ -267,7 +253,6 @@ const RouteModal = ({
             )}
           </View>
           
-          {/* Choix du mode de transport */}
           <View style={styles.transportContainer}>
             <TouchableOpacity
               style={[styles.transportButton, transportMode === 'walking' && styles.selectedTransport]}
@@ -302,7 +287,6 @@ const RouteModal = ({
             </TouchableOpacity>
           </View>
           
-          {/* Speed control slider - only shown for walking and bicycle */}
           {(transportMode === 'walking' || transportMode === 'bicycle') && (
             <View style={styles.speedContainer}>
               <View style={styles.speedLabelContainer}>
@@ -331,7 +315,6 @@ const RouteModal = ({
             </View>
           )}
           
-          {/* Option d'accessibilité en fauteuil roulant */}
           <View style={styles.accessibilityContainer}>
             <View style={styles.switchContainer}>
               <Ionicons name="accessibility" size={24} color="#4285F4" />
@@ -348,24 +331,7 @@ const RouteModal = ({
             </Text>
           </View>
           
-          {/* Option pour mode sécurité femmes */}
-          {/* <View style={styles.accessibilityContainer}>
-            <View style={styles.switchContainer}>
-              <Ionicons name="shield-checkmark" size={24} color="#E91E63" />
-              <Text style={styles.switchLabel}>Mode sécurité femmes</Text>
-              <Switch
-                value={safetyModeForWomen}
-                onValueChange={onSafetyModeChange}
-                trackColor={{ false: "#D1D1D6", true: "#ffb6c1" }}
-                thumbColor={safetyModeForWomen ? "#E91E63" : "#f4f3f4"}
-              />
-            </View>
-            <Text style={styles.accessibilityHint}>
-              Privilégier les itinéraires sécurisés et éviter certains quartiers la nuit
-            </Text>
-          </View> */}
-          
-          {/* Date and Time Picker */}
+       
           <View style={styles.dateTimeContainer}>
             <View style={styles.dateTimeHeader}>
               <Ionicons name="calendar" size={24} color="#4285F4" />
@@ -373,7 +339,7 @@ const RouteModal = ({
             </View>
             
             <View style={styles.datePickersContainer}>
-              {/* Date Picker - Always visible */}
+            
               <View style={styles.pickerWrapper}>
                 <Text style={styles.pickerLabel}>Date:</Text>
                 <DateTimePicker
@@ -387,7 +353,6 @@ const RouteModal = ({
                 />
               </View>
               
-              {/* Time Picker - Always visible */}
               <View style={styles.pickerWrapper}>
                 <Text style={styles.pickerLabel}>Heure:</Text>
                 <DateTimePicker
@@ -402,7 +367,6 @@ const RouteModal = ({
             </View>
           </View>
           
-          {/* Bouton de recherche */}
           <TouchableOpacity 
             style={styles.routeButton} 
             onPress={onSearch}
@@ -413,7 +377,6 @@ const RouteModal = ({
             </Text>
           </TouchableOpacity>
           
-          {/* Bouton pour réduire le modal */}
           <TouchableOpacity
             style={styles.closeButton}
             onPress={onClose}
@@ -426,20 +389,17 @@ const RouteModal = ({
   );
 };
 
-// Example for your parent component
 const onTransportModeChange = (mode) => {
   setTransportMode(mode);
   
-  // Reset speeds to appropriate defaults when changing modes
   if (mode === 'walking') {
-    setWalkSpeed(3); // Corrected from setCurr
+    setWalkSpeed(3); 
   } else if (mode === 'bicycle') {
     setBikeSpeed(11); 
   }
 };
 
 const styles = StyleSheet.create({
-  // Add the new style for Marcus image
   marcusImage: {
     position: 'absolute',
     width: 500,
@@ -512,7 +472,7 @@ const styles = StyleSheet.create({
     marginTop: 5,
     color: 'white',
   },
-  // New styles for speed control
+
   speedContainer: {
     marginBottom: 0,
     backgroundColor: '#f5f5f5',
@@ -571,7 +531,7 @@ const styles = StyleSheet.create({
   accessibilityHint: {
     fontSize: 12,
     color: '#666',
-    marginLeft: 34, // Aligner avec le texte du label
+    marginLeft: 34,
   },
   suggestionsContainer: {
     backgroundColor: 'white',
@@ -619,7 +579,7 @@ const styles = StyleSheet.create({
   pickerWrapper: {
     flexDirection: 'row',
     alignItems: 'center',
-    //backgroundColor: '#f5f5f5',
+
     paddingVertical: 10,
     paddingHorizontal: 15,
     borderRadius: 10,

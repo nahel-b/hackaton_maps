@@ -24,7 +24,6 @@ const RouteInfoModal = ({
   const [multiModeRoutes, setMultiModeRoutes] = useState({});
   const [loadingRoutes, setLoadingRoutes] = useState(false);
 
-  // All useEffects and other hooks must be here at the top level - no early returns before this
   useEffect(() => {
     if (visible && routeData && routeData.plan && routeData.plan.itineraries.length > 0) {
       const firstItinerary = routeData.plan.itineraries[0];
@@ -49,30 +48,25 @@ const RouteInfoModal = ({
     }
   }, [visible, routeData]);
 
-  // Create pan responder and other non-hook logic
   const panResponder = PanResponder.create({
     onMoveShouldSetPanResponder: (evt, gestureState) => {
-      // Only respond to vertical gestures near the top of the modal
-      // return gestureState.dy > 0 && evt.nativeEvent.locationY < 50;
+     
       false;
     },
     onPanResponderMove: (e, gesture) => {
-      if (gesture.dy > 0) { // Dragging down
+      if (gesture.dy > 0) { 
         modalHeight.setValue(FULL_MODAL_HEIGHT - gesture.dy);
       }
     },
     onPanResponderRelease: (e, gesture) => {
       if (gesture.dy > 100) {
-        // User dragged down significantly, minimize modal
         onMinimize();
       } else {
-        // Return to full height
         expandModal();
       }
     }
   });
 
-  // Function declarations
   const minimizeModal = () => {
     Animated.timing(modalHeight, {
       toValue: MINIMIZED_MODAL_HEIGHT,
@@ -95,7 +89,7 @@ const RouteInfoModal = ({
     const routes = {};
     
     try {
-      // Get API transport mode from UI mode
+
       const modeMap = {
         'walking': 'WALK',
         'bicycle': 'BICYCLE', 
@@ -103,7 +97,7 @@ const RouteInfoModal = ({
         'car': 'CAR'
       };
       
-      // Fetch routes for each mode
+
       for (const mode of modes) {
         const apiMode = modeMap[mode] || 'WALK';
         const result = await itineraire(startCoords, endCoords, apiMode);
@@ -123,15 +117,10 @@ const RouteInfoModal = ({
     }
   };
 
-  // Any other functions...
-  // ...
-
-  // NOW you can do early returns - AFTER all hook calls
   if (!visible || !routeData || !routeData.plan || !routeData.plan.itineraries || routeData.plan.itineraries.length === 0) {
     return null;
   }
 
-  // Get API transport mode from UI mode
   const getApiTransportMode = (uiMode) => {
     const modeMap = {
       'walking': 'WALK',
@@ -144,11 +133,11 @@ const RouteInfoModal = ({
 
   const apiMode = getApiTransportMode(transportMode);
   
-  // Select appropriate itinerary
+
   const itinerary = selectAppropriateItinerary(routeData.plan.itineraries, apiMode);
   if (!itinerary) return null;
   
-  // Formatting helpers
+
   const formatDuration = (seconds) => {
     const minutes = Math.floor(seconds / 60);
     const hours = Math.floor(minutes / 60);
@@ -184,7 +173,7 @@ const RouteInfoModal = ({
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  // Get icon for transport mode
+
   const getTransportIcon = (mode) => {
     switch(mode) {
       case 'walking': return 'walk';
@@ -195,11 +184,11 @@ const RouteInfoModal = ({
     }
   };
 
-  // Extract transit stops with timing info
+
   const getTransitStops = () => {
     const transitStops = [];
     
-    // Only process if itinerary has legs
+
     if (itinerary && itinerary.legs) {
       itinerary.legs.forEach((leg, index) => {
         if (['BUS', 'TRAM'].includes(leg.mode)) {
@@ -223,7 +212,7 @@ const RouteInfoModal = ({
   };
   
   const getTramColor = (tram) => {
-    // Mapping des couleurs de tram
+
     const tramColors = {
         "A": "#3376B8",
         "B": "#479A45",
@@ -232,26 +221,26 @@ const RouteInfoModal = ({
         "E": "#533786"
     };
     
-    // Si le tram existe dans notre mapping, retourner sa couleur
+
     if (tramColors[tram]) {
         return tramColors[tram];
     }
     
-    // Couleur par défaut
+
     return "#777777";
   };
 
   const transitStops = getTransitStops();
 
-  // Add a new section to display environmental impact
+
   const renderEnvironmentalImpact = () => {
-    // Vérifiez que impactData est un tableau non vide
+
     if (!impactData || !Array.isArray(impactData) || impactData.length === 0) {
       console.log("e"); 
       return null;
     }
     
-    // Les modes que nous voulons afficher avec leurs durées
+
     const modesConfig = [
       { id: 'walking', name: 'Marche', icon: 'walk', color: '#43A047', apiMode: 'WALK' },
       { id: 'bicycle', name: 'Vélo', icon: 'bicycle', color: '#1E88E5', apiMode: 'BICYCLE' },
@@ -259,16 +248,16 @@ const RouteInfoModal = ({
       { id: 'car', name: 'Voiture', icon: 'car', color: '#E53935', apiMode: 'CAR' }
     ];
     
-    // Fonction pour associer les IDs de l'API impactCO2 à nos modes UI
+
     const mapApiIdToUiMode = (apiId) => {
       const mapping = {
-        '30': 'walking',   // Marche
-        '7': 'bicycle',    // Vélo
-        '4': 'car',        // Voiture thermique
-        '5': 'car',        // Voiture électrique (on utilise le même)
-        '9': 'bus',        // Bus thermique
-        '16': 'bus',       // Bus électrique
-        '10': 'bus'        // Tram (on le met avec bus pour simplifier)
+        '30': 'walking',   
+        '7': 'bicycle',    
+        '4': 'car',       
+        '5': 'car',       
+        '9': 'bus',       
+        '16': 'bus',      
+        '10': 'bus'      
       };
       return mapping[apiId] || null;
     };
@@ -283,17 +272,17 @@ const RouteInfoModal = ({
         ) : (
           <View style={styles.transportModesGrid}>
             {modesConfig.map((mode) => {
-              // Trouver les données d'impact correspondant à ce mode
-              const modeImpactData = Array.isArray(impactData) ? impactData.find(item => 
+
+                const modeImpactData = Array.isArray(impactData) ? impactData.find(item => 
                 item && item.id && mapApiIdToUiMode(item.id.toString()) === mode.id
               ) : null;
               
-              // Get duration from pre-fetched routes
+
               const modeItinerary = multiModeRoutes[mode.id];
               const duration = modeItinerary ? modeItinerary.duration : null;
               const durationText = duration ? formatDuration(duration) : "Calcul...";
               
-              // Si on n'a pas de données pour ce mode, on l'affiche quand même
+
               const co2Value = modeImpactData ? 
                 `${modeImpactData.value.toFixed(1)} kgCO₂e` : 
                 'Non disponible';
@@ -328,25 +317,25 @@ const RouteInfoModal = ({
     );
   };
 
-  // Add this function after the renderEnvironmentalImpact function
 
+  
 const renderMarcusEcoSuggestion = () => {
-  // Only show suggestions if current mode is car
+
   if (transportMode !== 'car') return null;
   
-  // Get the durations for different modes
+
   const carItinerary = multiModeRoutes['car'];
   const walkItinerary = multiModeRoutes['walking'];
   const bikeItinerary = multiModeRoutes['bicycle'];
   
   if (!carItinerary || !walkItinerary || !bikeItinerary) return null;
   
-  // Convert to minutes for easier comparison
+
   const carDurationMins = Math.round(carItinerary.duration / 60);
   const walkDurationMins = Math.round(walkItinerary.duration / 60);
   const bikeDurationMins = Math.round(bikeItinerary.duration / 60);
   
-  // Find CO2 impact data for each mode
+
   const findImpactData = (mode) => {
     const modeMapping = { 'car': '4', 'walking': '30', 'bicycle': '7' };
     return impactData?.find(item => item?.id?.toString() === modeMapping[mode]);
@@ -356,13 +345,13 @@ const renderMarcusEcoSuggestion = () => {
   const walkImpact = findImpactData('walking');
   const bikeImpact = findImpactData('bicycle');
   
-  // Calculate savings
+
   const walkingSavings = carImpact && walkImpact ? 
     (carImpact.value - walkImpact.value).toFixed(1) : 0;
   const bikeSavings = carImpact && bikeImpact ? 
     (carImpact.value - bikeImpact.value).toFixed(1) : 0;
   
-  // Short car trip that could be walked (under 15 mins)
+
   if (walkDurationMins < 15) {
     return (
       <View style={styles.marcusSuggestionContainer}>
@@ -411,7 +400,6 @@ const renderMarcusEcoSuggestion = () => {
     );
   }
   
-  // Bike trip that's not much longer than car (at most 10 mins more)
   if (bikeDurationMins - carDurationMins <= 20) {
     return (
       <View style={styles.marcusSuggestionContainer}>
@@ -481,7 +469,6 @@ const renderMarcusEcoSuggestion = () => {
           style={[
             styles.modalView, 
             { height: modalHeight },
-            // Add position absolute when minimized to avoid taking up layout space
             isMinimized && { 
               position: 'absolute', 
               bottom: 0,
@@ -489,17 +476,10 @@ const renderMarcusEcoSuggestion = () => {
               right: 0
             }
           ]}
-          // Add pointerEvents to the Animated.View as well
-          //pointerEvents={isMinimized ? 'box-none' : 'auto'}
           {...(isMinimized ? {} : panResponder.panHandlers)}
         >
-          {/* Drag handle */}
-          {/* <View style={[styles.dragHandle,]}>
-            <View style={styles.dragHandleBar} />
-          </View>
-           */}
+         
           {isMinimized ? (
-            // Minimized view
             <TouchableOpacity 
               style={styles.minimizedContent} 
               onPress={expandModal}
@@ -531,7 +511,6 @@ const renderMarcusEcoSuggestion = () => {
                 </TouchableOpacity>
               </View>
               
-              {/* Résumé du trajet */}
               <View style={styles.summaryContainer}>
                 <View style={styles.iconContainer}>
                   <Ionicons name={getTransportIcon(transportMode)} size={28} color="#4285F4" />
@@ -547,34 +526,11 @@ const renderMarcusEcoSuggestion = () => {
                   contentContainerStyle={styles.scrollViewContent}
                   showsVerticalScrollIndicator={true}
                 >
-                  {/* Section impact environnemental */}
                   {renderEnvironmentalImpact()}
 
-                  {/* Marcus eco-friendly suggestions */}
                   {renderMarcusEcoSuggestion()}
 
-                  {/* Informations détaillées */}
-                  {/* <View style={styles.infoRow}>
-                    <Text style={styles.infoLabel}>Date:</Text>
-                    <Text style={styles.infoValue}>{formatDate(itinerary.startTime)}</Text>
-                  </View>
-                  
-                  <View style={styles.infoRow}>
-                    <Text style={styles.infoLabel}>Heure départ:</Text>
-                    <Text style={styles.infoValue}>{formatTime(itinerary.startTime)}</Text>
-                  </View>
-                  
-                  <View style={styles.infoRow}>
-                    <Text style={styles.infoLabel}>Heure arrivée:</Text>
-                    <Text style={styles.infoValue}>{formatTime(itinerary.endTime)}</Text>
-                  </View>
-                  
-                  <View style={styles.infoRow}>
-                    <Text style={styles.infoLabel}>Distance:</Text>
-                    <Text style={styles.infoValue}>{formatDistance(itinerary.walkDistance)}</Text>
-                  </View> */}
-
-                  {/* Afficher l'élévation pour les modes vélo et marche */}
+                 
                   {(transportMode === 'walking' || transportMode === 'bicycle') && itinerary.elevationGained && (
                     <>
                       <View style={styles.infoRow}>
@@ -589,38 +545,32 @@ const renderMarcusEcoSuggestion = () => {
                     </>
                   )}
                   
-                  {/* Transit stops and departure times */}
                   {transitStops.length > 0 && (
                     <View style={styles.transitTimesContainer}>
                       <Text style={styles.sectionTitle}>Prochains départs:</Text>
                       {transitStops.map((stop, stopIndex) => {
                         console.log(JSON.stringify(stopTimesData));
                         const stopData = stopTimesData[stopIndex] ? stopTimesData[stopIndex].find(data => {
-                          // Basic validation
                           if (!data || !data.pattern) return false;
                           
                           const pattern = data.pattern;
                           
-                          // For bus routes
                           if (stop.mode === 'BUS') {
-                            // Extract numbers from route
                             const routeNumber = stop.route;
                             
-                            // Extract route number from pattern ID
                             const patternMatch = pattern.id.match(/SEM:(\d+):/);
                             const patternNumber = patternMatch ? patternMatch[1] : '';
                             
-                            // Check for direct match
                             return patternNumber === routeNumber;
                           } 
-                          // For trams
+
                           else {
-                            // Direct match for tram letters
+
                             return pattern.id.includes(`:${stop.route}:`);
                           }
                         }) : null;
 
-                        // If no matching found, try a more generic approach
+
                         const fallbackData = !stopData && stopTimesData[stopIndex] && stopTimesData[stopIndex][0];
                         const dataToUse = stopData || fallbackData;
                         
@@ -656,7 +606,6 @@ const renderMarcusEcoSuggestion = () => {
                     </View>
                   )}
 
-                  {/* Détails des segments de trajet */}
                   {itinerary.legs && itinerary.legs.length > 0 && (
                     <>
                       <Text style={styles.sectionTitle}>Étapes:</Text>
@@ -674,8 +623,8 @@ const renderMarcusEcoSuggestion = () => {
                               {leg.mode === 'WALK' ? 'Marche' : 
                                leg.mode === 'BICYCLE' ? 'Vélo' : 
                                leg.mode === 'CAR' ? 'Voiture' : 
-                               // For transit modes, display line and direction when available
-                                 leg.routeShortName ? (
+
+                               leg.routeShortName ? (
                                  <View style={{ flexDirection: 'row', alignItems: 'center' }}>
                                    <View style={[
                                    { 
@@ -715,7 +664,7 @@ const renderMarcusEcoSuggestion = () => {
 
                         </ScrollView>
                         
-                        {/* Bouton pour fermer */}
+
               <TouchableOpacity
                 style={styles.closeButton}
                 onPress={onReset}
@@ -795,7 +744,6 @@ const styles = StyleSheet.create({
   },
   detailsContainer: {
     flex : 1
-   //paddingBottom: SCREEN_HEIGHT * 0.2,
   },
   infoRow: {
     flexDirection: 'row',
@@ -950,7 +898,6 @@ const styles = StyleSheet.create({
   scrollViewContent: {
     paddingBottom: 20,
   },
-  // Nouveaux styles pour la section d'impact environnemental
   environmentalImpactContainer: {
     marginTop: 0,
     marginBottom: 0,
@@ -987,12 +934,10 @@ const styles = StyleSheet.create({
     borderRadius: 18,
     alignItems: 'center',
     justifyContent: 'center',
-    //marginBottom: 6,
   },
   transportModeName: {
     fontSize: 14,
     fontWeight: 'bold',
-    //marginBottom: 4,
   },
   co2Container: {
     flexDirection: 'row',

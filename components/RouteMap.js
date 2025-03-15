@@ -6,7 +6,7 @@ import { getStopCodeByName } from '../utils/stopUtils';
 import * as Location from 'expo-location';
 import routesData from '../assets/routes.json';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { getWeather, getAirPollution } from '../assets/api'; // Import the API functions
+import { getWeather, getAirPollution } from '../assets/api';
 
 const RouteMap = ({ 
   region, 
@@ -70,13 +70,11 @@ const RouteMap = ({
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
-  // Fonction pour basculer la vue 3D - modifie uniquement l'angle
   const toggle3DBuildings = () => {
     if (mapRef.current) {
       const newState = !show3DBuildings;
       setShow3DBuildings(newState);
       
-      // Anime uniquement le pitch (angle) sans modifier les autres paramètres
       mapRef.current.animateCamera({
         pitch: newState ? 45 : 0,
       }, 500);
@@ -104,11 +102,9 @@ const RouteMap = ({
     fetchWeatherAndPollution();
   }, [region.latitude, region.longitude]);
 
-  // Get the weather icon based on the weather condition code
   const getWeatherIcon = (weatherCode) => {
     if (!weatherCode) return 'weather-partly-cloudy';
     
-    // Weather codes from OpenWeather API: https://openweathermap.org/weather-conditions
     if (weatherCode >= 200 && weatherCode < 300) return 'weather-lightning';
     if (weatherCode >= 300 && weatherCode < 400) return 'weather-pouring';
     if (weatherCode >= 500 && weatherCode < 600) return 'weather-rainy';
@@ -120,11 +116,9 @@ const RouteMap = ({
     return 'weather-partly-cloudy';
   };
 
-  // Get color for air quality based on the AQI value
   const getAirQualityColor = (aqi) => {
-    if (!aqi && aqi !== 0) return '#999'; // Gray for unknown
+    if (!aqi && aqi !== 0) return '#999'; 
     
-    // AQI levels from OpenWeather API
     switch (aqi) {
       case 1: return '#4CAF50'; // Good - Green
       case 2: return '#8BC34A'; // Fair - Light Green
@@ -135,7 +129,6 @@ const RouteMap = ({
     }
   };
 
-  // Get text description for air quality
   const getAirQualityText = (aqi) => {
     if (!aqi && aqi !== 0) return 'Inconnu';
     
@@ -151,7 +144,6 @@ const RouteMap = ({
 
   return (
     <>
-      {/* Boutons de filtre au-dessus de la carte avec ajustement pour l'encoche */}
       <View style={[styles.filterContainer, { top: 10 + insets.top }]}>
         <TouchableOpacity 
           style={[styles.filterButton, showFountains && styles.filterButtonActive]} 
@@ -196,7 +188,6 @@ const RouteMap = ({
         </TouchableOpacity>
       </View>
       
-      {/* Weather and Air Quality Indicators */}
       <View style={[styles.weatherContainer, { top: 70 + insets.top }]}>
         {loading && false ? (
           <ActivityIndicator size="small" color="#4285F4" />
@@ -240,11 +231,7 @@ const RouteMap = ({
           style={[styles.filterButton, show3DBuildings && styles.filterButtonActive]} 
           onPress={toggle3DBuildings}
         >
-          {/* <MaterialIcons 
-            name="3d-rotation" 
-            size={24} 
-            color={show3DBuildings ? "white" : "#0D47A1"} 
-          /> */}
+     
           <Text style={[styles.filterText, show3DBuildings && styles.filterTextActive,{fontSize: 14, fontWeight: '900',alignSelf: 'center'}]}>
             3D
           </Text>
@@ -252,7 +239,6 @@ const RouteMap = ({
       </View>
       </View>
 
-      {/* Bouton 3D sur la droite de l'écran */}
       
 
       <MapView
@@ -275,7 +261,6 @@ const RouteMap = ({
           />
         )}
         
-        {/* Affichage des fontaines */}
         {showFountains && routesData.drinking_water.map((fountain, index) => (
           <Marker
             key={`fountain-${fountain.id}`}
@@ -296,7 +281,6 @@ const RouteMap = ({
           </Marker>
         ))}
 
-        {/* Affichage des toilettes */}
         {showToilets && routesData.toilettes.map((toilet, index) => (
           <Marker
             key={`toilet-${toilet.id}`}
@@ -317,7 +301,6 @@ const RouteMap = ({
           </Marker>
         ))}
 
-        {/* Affichage des musées */}
         {showMuseums && routesData.musée.map((museum, index) => (
           <Marker
             key={`museum-${museum.id}`}
@@ -468,7 +451,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     marginVertical: 2,
   },
-  // Nouveaux styles pour les filtres et marqueurs
   filterContainer: {
     position: 'absolute',
     top: 10,
@@ -526,8 +508,7 @@ const styles = StyleSheet.create({
   },
   rightButtonContainer: {
     position: 'relative',
-    //right: 10,
-    //top: 200, // Position plus basse que les filtres principaux
+   
     zIndex: 999,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
