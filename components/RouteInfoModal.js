@@ -436,6 +436,37 @@ const renderMarcusEcoSuggestion = () => {
             </Text>
           </View>
           
+          <View style={styles.marcusInfoRow}>
+            <View style={styles.marcusIconContainer}>
+              <FontAwesome5 name="equals" size={14} color="#666" />
+            </View>
+            <Text style={styles.marcusHighlightText}>
+              Équivalent à {(() => {
+                // Provide more varied equivalents based on CO2 savings value
+                if (bikeSavings > 2) {
+                  return `${Math.round(bikeSavings * 3)} douches économisées`;
+                } else if (bikeSavings > 1) {
+                  return `${Math.round(bikeSavings * 5)} km en voiture`;
+                } else if (bikeSavings > 0.5) {
+                  return `${Math.round(bikeSavings * 50)} smartphones rechargés`;
+                } else {
+                  return `${Math.round(bikeSavings * 100)} heures d'ampoule LED`;
+                }
+              })()}
+            </Text>
+          </View>
+          
+          {bikeSavings > 0.8 && (
+            <View style={styles.marcusInfoRow}>
+              <View style={styles.marcusIconContainer}>
+                <MaterialCommunityIcons name="food-apple" size={16} color="#8BC34A" />
+              </View>
+              <Text style={styles.marcusHighlightText}>
+                Ou {Math.round(bikeSavings * 2)} repas sans viande
+              </Text>
+            </View>
+          )}
+          
           <TouchableOpacity 
             style={styles.marcusActionButton} 
             onPress={() => onChangeTransportMode('bicycle')}

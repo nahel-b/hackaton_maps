@@ -329,7 +329,7 @@ const RouteModal = ({
             <View style={styles.speedContainer}>
               <View style={styles.speedLabelContainer}>
                 <Text style={styles.speedLabel}>
-                  Vitesse: {currentSpeed.toFixed(1)} m/s
+                  Vitesse: {currentSpeed.toFixed(1)} km/h
                 </Text>
                 <Slider
                 key={`speed-slider-${transportMode}`}
